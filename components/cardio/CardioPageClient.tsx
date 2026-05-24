@@ -3,6 +3,7 @@
 import { useUnit } from "@/hooks/useUnit";
 import { CardioForm } from "./CardioForm";
 import { CardioTable } from "./CardioTable";
+import { ExportButton } from "@/components/ExportButton";
 import type { CardioEntry } from "@/lib/types";
 
 export function CardioPageClient({ entries }: { entries: CardioEntry[] }) {
@@ -15,27 +16,30 @@ export function CardioPageClient({ entries }: { entries: CardioEntry[] }) {
           <h1 className="text-xl font-semibold">Cardio</h1>
           <p className="text-sm text-muted-foreground">Running, cycling, swimming, and more</p>
         </div>
-        <div className="flex items-center rounded-md border overflow-hidden text-sm">
-          <button
-            onClick={() => setUnit("mi")}
-            className={`px-3 py-1.5 transition-colors ${
-              unit === "mi"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
-          >
-            mi
-          </button>
-          <button
-            onClick={() => setUnit("km")}
-            className={`px-3 py-1.5 transition-colors ${
-              unit === "km"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
-          >
-            km
-          </button>
+        <div className="flex items-center gap-2">
+          <ExportButton href="/api/export/cardio" filename="cardio.csv" />
+          <div className="flex items-center rounded-md border overflow-hidden text-sm">
+            <button
+              onClick={() => setUnit("mi")}
+              className={`px-3 py-1.5 transition-colors ${
+                unit === "mi"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              mi
+            </button>
+            <button
+              onClick={() => setUnit("km")}
+              className={`px-3 py-1.5 transition-colors ${
+                unit === "km"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              km
+            </button>
+          </div>
         </div>
       </div>
       <CardioForm unit={unit} />
