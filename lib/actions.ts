@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { readCsv, writeCsv } from "./csv";
+import { readRoute, writeRoute, type RouteFeature } from "./routes";
 import type {
   CardioEntry,
   DailyEntry,
@@ -72,13 +73,26 @@ export async function getCardioEntries(): Promise<CardioEntry[]> {
   );
 }
 
-export async function addCardioEntry(entry: CardioEntry): Promise<void> {
+export async function addCardioEntry(
+  entry: CardioEntry,
+  routeFeature?: RouteFeature
+): Promise<void> {
+  let entryToSave = entry;
+  if (routeFeature) {
+    const route_id = new Date().toISOString();
+    writeRoute(route_id, routeFeature);
+    entryToSave = { ...entry, route_id };
+  }
   const rows = readCsv<CardioEntry>("cardio.csv");
-  rows.push(entry);
+  rows.push(entryToSave);
   rows.sort((a, b) => a.date.localeCompare(b.date));
   writeCsv("cardio.csv", rows);
   revalidatePath("/");
   revalidatePath("/cardio");
+}
+
+export async function getRoute(routeId: string): Promise<RouteFeature | null> {
+  return readRoute(routeId);
 }
 
 export async function deleteCardioEntry(
