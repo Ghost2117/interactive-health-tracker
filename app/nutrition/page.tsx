@@ -1,6 +1,7 @@
 import { getNutritionEntries } from "@/lib/actions";
 import { NutritionForm } from "@/components/nutrition/NutritionForm";
 import { NutritionTable } from "@/components/nutrition/NutritionTable";
+import { MacroChart } from "@/components/nutrition/MacroChart";
 
 export default async function NutritionPage() {
   const entries = await getNutritionEntries();
@@ -13,6 +14,7 @@ export default async function NutritionPage() {
       </div>
       <NutritionForm />
       <NutritionTable entries={entries} />
+      <MacroChart entries={entries} />
     </div>
   );
 }
