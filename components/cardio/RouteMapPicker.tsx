@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Map, { useControl, type MapRef } from "react-map-gl/mapbox";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import length from "@turf/length";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MapPin, Search, Trash2 } from "lucide-react";
+import { toDisplay, unitLabel, type Unit } from "@/lib/units";
 import type { RouteFeature } from "@/lib/routes";
 
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -65,6 +66,8 @@ async function geocode(query: string): Promise<Suggestion[]> {
 // ── Main component ───────────────────────────────────────────────────────────
 
 type Props = {
+  expanded?: boolean;
+  unit: Unit;
   onConfirm: (result: {
     distance_km: number;
     duration_min: number;
@@ -73,8 +76,14 @@ type Props = {
   onCancel: () => void;
 };
 
-export function RouteMapPicker({ onConfirm, onCancel }: Props) {
+export function RouteMapPicker({ expanded, unit, onConfirm, onCancel }: Props) {
   const mapRef = useRef<MapRef>(null);
+
+  // Resize the Mapbox canvas after the dialog's CSS transition finishes (200ms)
+  useEffect(() => {
+    const t = setTimeout(() => mapRef.current?.resize(), 220);
+    return () => clearTimeout(t);
+  }, [expanded]);
   const [viewState, setViewState] = useState({
     longitude: -0.1276,
     latitude: 51.5074,
@@ -172,15 +181,15 @@ export function RouteMapPicker({ onConfirm, onCancel }: Props) {
         )}
       </div>
 
-      {/* Map */}
-      <div className="flex-1 rounded-md overflow-hidden border min-h-[380px]">
+      {/* Map — relative container so the canvas fills it absolutely */}
+      <div className="flex-1 relative rounded-md overflow-hidden border min-h-0">
         <Map
           ref={mapRef}
           {...viewState}
           onMove={(e) => setViewState(e.viewState)}
           mapStyle="mapbox://styles/mapbox/streets-v12"
           mapboxAccessToken={TOKEN}
-          style={{ width: "100%", height: "100%" }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
         >
           <DrawControl onCreate={onCreate} onUpdate={onUpdate} onDelete={onDelete} />
         </Map>
@@ -197,7 +206,9 @@ export function RouteMapPicker({ onConfirm, onCancel }: Props) {
       <div className="flex items-end gap-4">
         <div className="flex-1 rounded-md border bg-muted/40 px-4 py-2 text-center">
           <p className="text-xs text-muted-foreground">Distance</p>
-          <p className="text-xl font-bold">{distanceKm > 0 ? `${distanceKm} km` : "—"}</p>
+          <p className="text-xl font-bold">
+            {distanceKm > 0 ? `${toDisplay(distanceKm, unit)} ${unitLabel(unit)}` : "—"}
+          </p>
         </div>
         <div className="flex-1 space-y-1">
           <Label htmlFor="duration">Duration (min)</Label>
