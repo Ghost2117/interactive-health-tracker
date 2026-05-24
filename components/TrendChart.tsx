@@ -1,7 +1,8 @@
 "use client";
 
 import {
-  LineChart,
+  ComposedChart,
+  Bar,
   Line,
   XAxis,
   YAxis,
@@ -16,7 +17,6 @@ type Props = {
   data: DataPoint[];
   dataKey: string;
   xKey?: string;
-  label?: string;
   color?: string;
   unit?: string;
 };
@@ -25,7 +25,7 @@ export function TrendChart({
   data,
   dataKey,
   xKey = "date",
-  color = "hsl(var(--primary))",
+  color = "#3b82f6",
   unit = "",
 }: Props) {
   const formatted = data.map((d) => ({
@@ -37,8 +37,8 @@ export function TrendChart({
 
   return (
     <ResponsiveContainer width="100%" height={200}>
-      <LineChart data={formatted} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+      <ComposedChart data={formatted} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
         <XAxis
           dataKey={xKey}
           tick={{ fontSize: 11 }}
@@ -56,6 +56,7 @@ export function TrendChart({
           formatter={(v) => [`${v}${unit}`, ""]}
           contentStyle={{ fontSize: 12 }}
         />
+        <Bar dataKey={dataKey} fill={color} opacity={0.25} radius={[3, 3, 0, 0]} />
         <Line
           type="monotone"
           dataKey={dataKey}
@@ -64,7 +65,7 @@ export function TrendChart({
           dot={false}
           activeDot={{ r: 4 }}
         />
-      </LineChart>
+      </ComposedChart>
     </ResponsiveContainer>
   );
 }
