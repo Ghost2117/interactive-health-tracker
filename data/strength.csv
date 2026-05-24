@@ -1,0 +1,10 @@
+date,exercise,muscle_group,sets,reps,weight_kg,notes
+2026-05-19,Bench Press,Chest,4,8,80,
+2026-05-19,Incline Dumbbell Press,Chest,3,10,30,
+2026-05-19,Tricep Pushdown,Triceps,3,12,25,
+2026-05-21,Squat,Legs,4,5,100,
+2026-05-21,Romanian Deadlift,Hamstrings,3,10,70,
+2026-05-21,Leg Press,Legs,3,12,120,
+2026-05-23,Pull-up,Back,4,8,0,Bodyweight
+2026-05-23,Barbell Row,Back,4,8,70,
+2026-05-23,Bicep Curl,Biceps,3,12,15,

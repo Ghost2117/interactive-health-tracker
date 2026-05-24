@@ -1,0 +1,18 @@
+import { getNutritionEntries } from "@/lib/actions";
+import { NutritionForm } from "@/components/nutrition/NutritionForm";
+import { NutritionTable } from "@/components/nutrition/NutritionTable";
+
+export default async function NutritionPage() {
+  const entries = await getNutritionEntries();
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold">Nutrition</h1>
+        <p className="text-sm text-muted-foreground">Meals, calories, and macros</p>
+      </div>
+      <NutritionForm />
+      <NutritionTable entries={entries} />
+    </div>
+  );
+}
