@@ -23,6 +23,7 @@ export type CardioEntry = {
   duration_min: number;
   distance_km: number;
   avg_heart_rate: number;
+  route_id?: string;
   notes: string;
 };
 

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { readCsv, writeCsv } from "./csv";
+import { readRoute, writeRoute, type RouteFeature } from "./routes";
 import type {
   CardioEntry,
   DailyEntry,
@@ -37,6 +38,12 @@ export async function deleteDailyEntry(date: string): Promise<void> {
 
 // ── Strength ───────────────────────────────────────────────────────────────
 
+export async function getExerciseNames(): Promise<string[]> {
+  const rows = readCsv<StrengthEntry>("strength.csv");
+  const names = Array.from(new Set(rows.map((r) => r.exercise).filter(Boolean)));
+  return names.sort((a, b) => a.localeCompare(b));
+}
+
 export async function getStrengthEntries(): Promise<StrengthEntry[]> {
   return readCsv<StrengthEntry>("strength.csv").sort((a, b) =>
     a.date.localeCompare(b.date)
@@ -64,6 +71,20 @@ export async function deleteStrengthEntry(
   revalidatePath("/strength");
 }
 
+export async function updateStrengthEntry(
+  original: StrengthEntry,
+  updated: StrengthEntry
+): Promise<void> {
+  const rows = readCsv<StrengthEntry>("strength.csv").filter(
+    (r) => !(r.date === original.date && r.exercise === original.exercise)
+  );
+  rows.push(updated);
+  rows.sort((a, b) => a.date.localeCompare(b.date));
+  writeCsv("strength.csv", rows);
+  revalidatePath("/");
+  revalidatePath("/strength");
+}
+
 // ── Cardio ─────────────────────────────────────────────────────────────────
 
 export async function getCardioEntries(): Promise<CardioEntry[]> {
@@ -72,13 +93,26 @@ export async function getCardioEntries(): Promise<CardioEntry[]> {
   );
 }
 
-export async function addCardioEntry(entry: CardioEntry): Promise<void> {
+export async function addCardioEntry(
+  entry: CardioEntry,
+  routeFeature?: RouteFeature
+): Promise<void> {
+  let entryToSave = entry;
+  if (routeFeature) {
+    const route_id = new Date().toISOString();
+    writeRoute(route_id, routeFeature);
+    entryToSave = { ...entry, route_id };
+  }
   const rows = readCsv<CardioEntry>("cardio.csv");
-  rows.push(entry);
+  rows.push(entryToSave);
   rows.sort((a, b) => a.date.localeCompare(b.date));
   writeCsv("cardio.csv", rows);
   revalidatePath("/");
   revalidatePath("/cardio");
+}
+
+export async function getRoute(routeId: string): Promise<RouteFeature | null> {
+  return readRoute(routeId);
 }
 
 export async function deleteCardioEntry(
@@ -88,6 +122,27 @@ export async function deleteCardioEntry(
   const rows = readCsv<CardioEntry>("cardio.csv").filter(
     (r) => !(r.date === date && r.activity_type === activity_type)
   );
+  writeCsv("cardio.csv", rows);
+  revalidatePath("/");
+  revalidatePath("/cardio");
+}
+
+export async function updateCardioEntry(
+  original: CardioEntry,
+  updated: CardioEntry,
+  routeFeature?: RouteFeature
+): Promise<void> {
+  let entryToSave = updated;
+  if (routeFeature) {
+    const route_id = new Date().toISOString();
+    writeRoute(route_id, routeFeature);
+    entryToSave = { ...updated, route_id };
+  }
+  const rows = readCsv<CardioEntry>("cardio.csv").filter(
+    (r) => !(r.date === original.date && r.activity_type === original.activity_type)
+  );
+  rows.push(entryToSave);
+  rows.sort((a, b) => a.date.localeCompare(b.date));
   writeCsv("cardio.csv", rows);
   revalidatePath("/");
   revalidatePath("/cardio");
@@ -118,6 +173,25 @@ export async function deleteNutritionEntry(
   const rows = readCsv<NutritionEntry>("nutrition.csv").filter(
     (r) => !(r.date === date && r.meal_type === meal_type && r.food === food)
   );
+  writeCsv("nutrition.csv", rows);
+  revalidatePath("/");
+  revalidatePath("/nutrition");
+}
+
+export async function updateNutritionEntry(
+  original: NutritionEntry,
+  updated: NutritionEntry
+): Promise<void> {
+  const rows = readCsv<NutritionEntry>("nutrition.csv").filter(
+    (r) =>
+      !(
+        r.date === original.date &&
+        r.meal_type === original.meal_type &&
+        r.food === original.food
+      )
+  );
+  rows.push(updated);
+  rows.sort((a, b) => a.date.localeCompare(b.date));
   writeCsv("nutrition.csv", rows);
   revalidatePath("/");
   revalidatePath("/nutrition");
