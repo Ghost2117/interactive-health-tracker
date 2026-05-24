@@ -7,14 +7,23 @@ type Props = {
   unit?: string;
   icon: LucideIcon;
   sub?: string;
+  accent?: string;
 };
 
-export function MetricCard({ title, value, unit, icon: Icon, sub }: Props) {
+export function MetricCard({ title, value, unit, icon: Icon, sub, accent }: Props) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <Icon size={16} className="text-muted-foreground" />
+        <div
+          className="rounded-lg p-1.5"
+          style={{
+            color: accent ?? "var(--muted-foreground)",
+            backgroundColor: accent ? `${accent}18` : undefined,
+          }}
+        >
+          <Icon size={16} />
+        </div>
       </CardHeader>
       <CardContent>
         <div className="flex items-baseline gap-1">

@@ -42,7 +42,7 @@ export function DailyTable({ entries }: { entries: DailyEntry[] }) {
         </TableHeader>
         <TableBody>
           {sorted.map((e) => (
-            <TableRow key={e.date}>
+            <TableRow key={e.date} className="group">
               <TableCell className="font-medium">{e.date}</TableCell>
               <TableCell>{e.weight_kg}</TableCell>
               <TableCell>{e.steps.toLocaleString()}</TableCell>
@@ -50,12 +50,12 @@ export function DailyTable({ entries }: { entries: DailyEntry[] }) {
               <TableCell>{e.water_ml}</TableCell>
               <TableCell className="text-muted-foreground">{e.notes}</TableCell>
               <TableCell>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => setEditing(e)}>
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => setEditing(e)}>
                     <Pencil size={13} />
                   </Button>
                   <AlertDialog>
-                    <AlertDialogTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" />}>
+                    <AlertDialogTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10" />}>
                       <Trash2 size={13} />
                     </AlertDialogTrigger>
                     <AlertDialogContent>

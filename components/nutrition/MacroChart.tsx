@@ -16,9 +16,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import type { NutritionEntry } from "@/lib/types";
 
 const COLORS = {
-  protein: "hsl(221,83%,53%)",
-  carbs: "hsl(142,71%,45%)",
-  fat: "hsl(38,92%,50%)",
+  protein: "var(--chart-2)",
+  carbs: "var(--chart-5)",
+  fat: "var(--chart-3)",
 };
 
 type DailyTotal = {
@@ -113,7 +113,13 @@ export function MacroChart({ entries }: { entries: NutritionEntry[] }) {
                 />
                 <Tooltip
                   formatter={(value, name) => [`${value}g`, name]}
-                  contentStyle={{ fontSize: 12 }}
+                  contentStyle={{
+                    backgroundColor: "var(--card)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-md)",
+                    color: "var(--card-foreground)",
+                    fontSize: "0.75rem",
+                  }}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Bar dataKey="protein" name="Protein" stackId="macros" fill={COLORS.protein} />
@@ -153,7 +159,13 @@ export function MacroChart({ entries }: { entries: NutritionEntry[] }) {
                 </Pie>
                 <Tooltip
                   formatter={(value, name) => [`${value}g`, name]}
-                  contentStyle={{ fontSize: 12 }}
+                  contentStyle={{
+                    backgroundColor: "var(--card)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-md)",
+                    color: "var(--card-foreground)",
+                    fontSize: "0.75rem",
+                  }}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
               </PieChart>

@@ -70,6 +70,7 @@ export default async function DashboardPage() {
           title="Steps Today"
           value={todayDaily ? todayDaily.steps.toLocaleString() : "—"}
           icon={Footprints}
+          accent="#3b82f6"
           sub={todayDaily ? undefined : "No entry yet"}
         />
         <MetricCard
@@ -77,6 +78,7 @@ export default async function DashboardPage() {
           value={todayDaily ? todayDaily.sleep_hours : "—"}
           unit={todayDaily ? "hrs" : undefined}
           icon={Moon}
+          accent="#8b5cf6"
           sub={todayDaily ? undefined : "No entry yet"}
         />
         <MetricCard
@@ -84,6 +86,7 @@ export default async function DashboardPage() {
           value={todayCalories > 0 ? todayCalories.toLocaleString() : "—"}
           unit={todayCalories > 0 ? "kcal" : undefined}
           icon={Utensils}
+          accent="#f97316"
           sub={todayCalories === 0 ? "No meals logged" : `${todayNutrition.length} meal${todayNutrition.length !== 1 ? "s" : ""}`}
         />
         <MetricCard
@@ -91,12 +94,14 @@ export default async function DashboardPage() {
           value={todayProtein > 0 ? todayProtein : "—"}
           unit={todayProtein > 0 ? "g" : undefined}
           icon={Flame}
+          accent="#ef4444"
           sub={todayProtein === 0 ? "No meals logged" : undefined}
         />
         <MetricCard
           title="Last Workout"
           value={lastWorkoutDate ?? "—"}
           icon={Dumbbell}
+          accent="#0d9488"
           sub={lastWorkoutDate ? undefined : "No workouts yet"}
         />
         <MetricCard
@@ -104,6 +109,7 @@ export default async function DashboardPage() {
           value={weekCardioSessions}
           unit={weekCardioSessions === 1 ? "session" : "sessions"}
           icon={Activity}
+          accent="#10b981"
           sub={weekCardioSessions === 0 ? "No sessions yet" : undefined}
         />
       </div>
@@ -117,7 +123,7 @@ export default async function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <TrendChart data={recentDaily} dataKey="weight_kg" unit=" kg" />
+            <TrendChart data={recentDaily} dataKey="weight_kg" unit=" kg" color="#0d9488" />
           </CardContent>
         </Card>
         <Card>
@@ -127,7 +133,7 @@ export default async function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <TrendChart data={recentDaily} dataKey="steps" />
+            <TrendChart data={recentDaily} dataKey="steps" color="#3b82f6" />
           </CardContent>
         </Card>
         <Card>
@@ -137,7 +143,7 @@ export default async function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <TrendChart data={recentDaily} dataKey="sleep_hours" unit=" hrs" />
+            <TrendChart data={recentDaily} dataKey="sleep_hours" unit=" hrs" color="#8b5cf6" />
           </CardContent>
         </Card>
       </div>
@@ -152,7 +158,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             {calTrend.length > 0
-              ? <TrendChart data={calTrend} dataKey="calories" unit=" kcal" />
+              ? <TrendChart data={calTrend} dataKey="calories" unit=" kcal" color="#f97316" />
               : <p className="text-xs text-muted-foreground text-center py-8">No nutrition data yet</p>}
           </CardContent>
         </Card>
@@ -164,7 +170,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             {cardioTrend.length > 0
-              ? <TrendChart data={cardioTrend} dataKey="distance_km" unit=" km" />
+              ? <TrendChart data={cardioTrend} dataKey="distance_km" unit=" km" color="#10b981" />
               : <p className="text-xs text-muted-foreground text-center py-8">No cardio data yet</p>}
           </CardContent>
         </Card>

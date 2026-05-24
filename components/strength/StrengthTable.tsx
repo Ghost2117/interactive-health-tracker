@@ -49,9 +49,15 @@ export function StrengthTable({ entries }: { entries: StrengthEntry[] }) {
             const showDate = e.date !== lastDate;
             lastDate = e.date;
             return (
-              <TableRow key={`${e.date}-${e.exercise}-${i}`}>
-                <TableCell className="font-medium">
-                  {showDate ? e.date : <span className="text-muted-foreground">↳</span>}
+              <TableRow
+                key={`${e.date}-${e.exercise}-${i}`}
+                className={`group ${showDate ? "bg-muted/30 dark:bg-muted/10" : ""}`}
+              >
+                <TableCell className={showDate
+                  ? "pl-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground border-l-2 border-primary"
+                  : "pl-6 text-muted-foreground"
+                }>
+                  {showDate ? e.date : ""}
                 </TableCell>
                 <TableCell>{e.exercise}</TableCell>
                 <TableCell>
@@ -62,12 +68,12 @@ export function StrengthTable({ entries }: { entries: StrengthEntry[] }) {
                 <TableCell>{e.weight_kg > 0 ? e.weight_kg : "BW"}</TableCell>
                 <TableCell className="text-muted-foreground">{e.notes}</TableCell>
                 <TableCell>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => setEditing(e)}>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => setEditing(e)}>
                       <Pencil size={13} />
                     </Button>
                     <AlertDialog>
-                      <AlertDialogTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" />}>
+                      <AlertDialogTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10" />}>
                         <Trash2 size={13} />
                       </AlertDialogTrigger>
                       <AlertDialogContent>

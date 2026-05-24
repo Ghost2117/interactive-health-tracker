@@ -58,7 +58,7 @@ export function CardioTable({ entries, unit }: { entries: CardioEntry[]; unit: U
               ? `${Math.floor(e.duration_min / displayDist)}:${String(Math.round(((e.duration_min / displayDist) % 1) * 60)).padStart(2, "0")}`
               : "—";
             return (
-              <TableRow key={`${e.date}-${e.activity_type}-${i}`}>
+              <TableRow key={`${e.date}-${e.activity_type}-${i}`} className="group">
                 <TableCell className="font-medium">{e.date}</TableCell>
                 <TableCell><Badge variant="secondary">{e.activity_type}</Badge></TableCell>
                 <TableCell>{e.duration_min}</TableCell>
@@ -67,17 +67,17 @@ export function CardioTable({ entries, unit }: { entries: CardioEntry[]; unit: U
                 <TableCell className="text-muted-foreground">{pace}</TableCell>
                 <TableCell className="text-muted-foreground">{e.notes}</TableCell>
                 <TableCell>
-                  <div className="flex gap-1">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                     {e.route_id && (
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-blue-500" title="View route" onClick={() => setViewingRouteId(e.route_id!)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10" title="View route" onClick={() => setViewingRouteId(e.route_id!)}>
                         <MapPin size={13} />
                       </Button>
                     )}
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => setEditing(e)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => setEditing(e)}>
                       <Pencil size={13} />
                     </Button>
                     <AlertDialog>
-                      <AlertDialogTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" />}>
+                      <AlertDialogTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10" />}>
                         <Trash2 size={13} />
                       </AlertDialogTrigger>
                       <AlertDialogContent>

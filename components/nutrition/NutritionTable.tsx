@@ -19,10 +19,10 @@ import { NutritionForm } from "./NutritionForm";
 import type { NutritionEntry } from "@/lib/types";
 
 const MEAL_COLORS: Record<string, string> = {
-  breakfast: "bg-yellow-100 text-yellow-800",
-  lunch: "bg-green-100 text-green-800",
-  dinner: "bg-blue-100 text-blue-800",
-  snack: "bg-purple-100 text-purple-800",
+  breakfast: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  lunch: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+  dinner: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  snack: "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
 };
 
 export function NutritionTable({ entries }: { entries: NutritionEntry[] }) {
@@ -67,7 +67,7 @@ export function NutritionTable({ entries }: { entries: NutritionEntry[] }) {
 
             return (
               <Fragment key={`${e.date}-${e.meal_type}-${e.food}-${i}`}>
-                <TableRow>
+                <TableRow className="group">
                   <TableCell className="font-medium">{showDate ? e.date : ""}</TableCell>
                   <TableCell>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${MEAL_COLORS[e.meal_type] ?? ""}`}>
@@ -80,12 +80,12 @@ export function NutritionTable({ entries }: { entries: NutritionEntry[] }) {
                   <TableCell>{e.carbs_g}</TableCell>
                   <TableCell>{e.fat_g}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => setEditing(e)}>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => setEditing(e)}>
                         <Pencil size={13} />
                       </Button>
                       <AlertDialog>
-                        <AlertDialogTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" />}>
+                        <AlertDialogTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10" />}>
                           <Trash2 size={13} />
                         </AlertDialogTrigger>
                         <AlertDialogContent>

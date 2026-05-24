@@ -97,11 +97,20 @@ export function ProgressionChart({ entries }: Props) {
                       tick={{ fontSize: 11 }}
                     />
                     <YAxis tick={{ fontSize: 11 }} width={40} />
-                    <Tooltip />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "var(--card)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-md)",
+                        color: "var(--card-foreground)",
+                        fontSize: "0.75rem",
+                      }}
+                    />
                     <Line
                       type="monotone"
                       dataKey="maxWeight"
-                      stroke="hsl(221,83%,53%)"
+                      name="Max Weight (kg)"
+                      stroke="#0d9488"
                       strokeWidth={2}
                       dot={{ r: 3 }}
                     />
@@ -126,12 +135,22 @@ export function ProgressionChart({ entries }: Props) {
                       tick={{ fontSize: 11 }}
                     />
                     <YAxis tick={{ fontSize: 11 }} width={40} />
-                    <Tooltip />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "var(--card)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-md)",
+                        color: "var(--card-foreground)",
+                        fontSize: "0.75rem",
+                      }}
+                    />
                     <Line
                       type="monotone"
                       dataKey="volume"
-                      stroke="hsl(221,83%,53%)"
+                      name="Total Volume (kg)"
+                      stroke="#f97316"
                       strokeWidth={2}
+                      strokeDasharray="4 2"
                       dot={{ r: 3 }}
                     />
                   </LineChart>

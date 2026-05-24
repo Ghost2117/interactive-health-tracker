@@ -38,7 +38,7 @@ export function TrendChart({
   return (
     <ResponsiveContainer width="100%" height={200}>
       <ComposedChart data={formatted} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
         <XAxis
           dataKey={xKey}
           tick={{ fontSize: 11 }}
@@ -54,7 +54,13 @@ export function TrendChart({
         />
         <Tooltip
           formatter={(v) => [`${v}${unit}`, ""]}
-          contentStyle={{ fontSize: 12 }}
+          contentStyle={{
+            backgroundColor: "var(--card)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-md)",
+            color: "var(--card-foreground)",
+            fontSize: "0.75rem",
+          }}
         />
         <Bar dataKey={dataKey} fill={color} opacity={0.25} radius={[3, 3, 0, 0]} />
         <Line
