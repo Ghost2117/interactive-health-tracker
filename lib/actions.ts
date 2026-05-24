@@ -38,6 +38,12 @@ export async function deleteDailyEntry(date: string): Promise<void> {
 
 // ── Strength ───────────────────────────────────────────────────────────────
 
+export async function getExerciseNames(): Promise<string[]> {
+  const rows = readCsv<StrengthEntry>("strength.csv");
+  const names = Array.from(new Set(rows.map((r) => r.exercise).filter(Boolean)));
+  return names.sort((a, b) => a.localeCompare(b));
+}
+
 export async function getStrengthEntries(): Promise<StrengthEntry[]> {
   return readCsv<StrengthEntry>("strength.csv").sort((a, b) =>
     a.date.localeCompare(b.date)

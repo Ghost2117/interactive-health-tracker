@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { addStrengthEntry, updateStrengthEntry } from "@/lib/actions";
 import type { StrengthEntry } from "@/lib/types";
+import { ExerciseInput } from "./ExerciseInput";
 
 function today() { return new Date().toISOString().slice(0, 10); }
 
@@ -51,7 +52,7 @@ export function StrengthForm({ editing, onClose }: Props) {
           </div>
           <div className="space-y-1">
             <Label htmlFor="s-exercise">Exercise</Label>
-            <Input id="s-exercise" value={form.exercise} onChange={(e) => set("exercise", e.target.value)} placeholder="Bench Press" required />
+            <ExerciseInput id="s-exercise" value={form.exercise} onChange={(v) => set("exercise", v)} placeholder="Bench Press" required />
           </div>
           <div className="space-y-1">
             <Label htmlFor="s-muscle">Muscle Group</Label>
