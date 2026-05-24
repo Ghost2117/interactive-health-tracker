@@ -1,6 +1,7 @@
 import { getStrengthEntries } from "@/lib/actions";
 import { StrengthForm } from "@/components/strength/StrengthForm";
 import { StrengthTable } from "@/components/strength/StrengthTable";
+import { ProgressionChart } from "@/components/strength/ProgressionChart";
 
 export default async function StrengthPage() {
   const entries = await getStrengthEntries();
@@ -13,6 +14,10 @@ export default async function StrengthPage() {
       </div>
       <StrengthForm />
       <StrengthTable entries={entries} />
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold">Exercise Progression</h2>
+        <ProgressionChart entries={entries} />
+      </section>
     </div>
   );
 }
