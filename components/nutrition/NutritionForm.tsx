@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,25 +23,47 @@ type Props = { editing?: NutritionEntry; onClose?: () => void };
 export function NutritionForm({ editing, onClose }: Props) {
   const [form, setForm] = useState<NutritionEntry>(editing ?? blank());
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof NutritionEntry, string>>>({});
 
   function set(field: keyof NutritionEntry, value: string) {
+    setErrors((e) => ({ ...e, [field]: undefined }));
     setForm((f) => ({
       ...f,
       [field]: ["calories", "protein_g", "carbs_g", "fat_g"].includes(field) ? Number(value) : value,
     }));
   }
 
+  function validate(): boolean {
+    const errs: Partial<Record<keyof NutritionEntry, string>> = {};
+    if (!form.date) errs.date = "Date is required";
+    if (form.date > today()) errs.date = "Date cannot be in the future";
+    if (!form.food.trim()) errs.food = "Food name is required";
+    if (form.calories < 0) errs.calories = "Must be 0 or greater";
+    if (form.protein_g < 0) errs.protein_g = "Must be 0 or greater";
+    if (form.carbs_g < 0) errs.carbs_g = "Must be 0 or greater";
+    if (form.fat_g < 0) errs.fat_g = "Must be 0 or greater";
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!validate()) return;
     setSaving(true);
+    const result = editing
+      ? await updateNutritionEntry(editing, form)
+      : await addNutritionEntry(form);
+    setSaving(false);
+    if (!result.success) {
+      toast.error(result.error ?? "Failed to save meal");
+      return;
+    }
+    toast.success(editing ? "Meal updated" : "Meal logged");
     if (editing) {
-      await updateNutritionEntry(editing, form);
       onClose?.();
     } else {
-      await addNutritionEntry(form);
       setForm(blank());
     }
-    setSaving(false);
   }
 
   return (
@@ -49,7 +73,13 @@ export function NutritionForm({ editing, onClose }: Props) {
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div className="space-y-1">
             <Label htmlFor="n-date">Date</Label>
-            <Input id="n-date" type="date" value={form.date} onChange={(e) => set("date", e.target.value)} required />
+            <Input
+              id="n-date" type="date" value={form.date}
+              onChange={(e) => set("date", e.target.value)}
+              max={today()} required
+              aria-invalid={!!errors.date}
+            />
+            {errors.date && <p className="text-xs text-destructive">{errors.date}</p>}
           </div>
           <div className="space-y-1">
             <Label htmlFor="n-meal">Meal</Label>
@@ -66,23 +96,57 @@ export function NutritionForm({ editing, onClose }: Props) {
           </div>
           <div className="space-y-1 col-span-2">
             <Label htmlFor="n-food">Food</Label>
-            <Input id="n-food" value={form.food} onChange={(e) => set("food", e.target.value)} placeholder="Chicken rice bowl" required />
+            <Input
+              id="n-food" value={form.food}
+              onChange={(e) => set("food", e.target.value)}
+              placeholder="Chicken rice bowl" required
+              aria-invalid={!!errors.food}
+            />
+            {errors.food && <p className="text-xs text-destructive">{errors.food}</p>}
           </div>
           <div className="space-y-1">
             <Label htmlFor="n-cal">Calories</Label>
-            <Input id="n-cal" type="number" min="0" value={form.calories || ""} onChange={(e) => set("calories", e.target.value)} placeholder="500" />
+            <Input
+              id="n-cal" type="number" min="0"
+              value={form.calories || ""}
+              onChange={(e) => set("calories", e.target.value)}
+              placeholder="500"
+              aria-invalid={!!errors.calories}
+            />
+            {errors.calories && <p className="text-xs text-destructive">{errors.calories}</p>}
           </div>
           <div className="space-y-1">
             <Label htmlFor="n-protein">Protein (g)</Label>
-            <Input id="n-protein" type="number" min="0" value={form.protein_g || ""} onChange={(e) => set("protein_g", e.target.value)} placeholder="40" />
+            <Input
+              id="n-protein" type="number" min="0"
+              value={form.protein_g || ""}
+              onChange={(e) => set("protein_g", e.target.value)}
+              placeholder="40"
+              aria-invalid={!!errors.protein_g}
+            />
+            {errors.protein_g && <p className="text-xs text-destructive">{errors.protein_g}</p>}
           </div>
           <div className="space-y-1">
             <Label htmlFor="n-carbs">Carbs (g)</Label>
-            <Input id="n-carbs" type="number" min="0" value={form.carbs_g || ""} onChange={(e) => set("carbs_g", e.target.value)} placeholder="60" />
+            <Input
+              id="n-carbs" type="number" min="0"
+              value={form.carbs_g || ""}
+              onChange={(e) => set("carbs_g", e.target.value)}
+              placeholder="60"
+              aria-invalid={!!errors.carbs_g}
+            />
+            {errors.carbs_g && <p className="text-xs text-destructive">{errors.carbs_g}</p>}
           </div>
           <div className="space-y-1">
             <Label htmlFor="n-fat">Fat (g)</Label>
-            <Input id="n-fat" type="number" min="0" value={form.fat_g || ""} onChange={(e) => set("fat_g", e.target.value)} placeholder="15" />
+            <Input
+              id="n-fat" type="number" min="0"
+              value={form.fat_g || ""}
+              onChange={(e) => set("fat_g", e.target.value)}
+              placeholder="15"
+              aria-invalid={!!errors.fat_g}
+            />
+            {errors.fat_g && <p className="text-xs text-destructive">{errors.fat_g}</p>}
           </div>
           <div className="space-y-1 col-span-2 sm:col-span-4">
             <Label htmlFor="n-notes">Notes</Label>
@@ -90,7 +154,10 @@ export function NutritionForm({ editing, onClose }: Props) {
           </div>
           <div className="col-span-2 sm:col-span-4 flex justify-end gap-2">
             {onClose && <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>}
-            <Button type="submit" disabled={saving}>{saving ? "Saving…" : editing ? "Save Changes" : "Add Meal"}</Button>
+            <Button type="submit" disabled={saving}>
+              {saving && <Loader2 size={14} className="animate-spin" />}
+              {saving ? "Saving…" : editing ? "Save Changes" : "Add Meal"}
+            </Button>
           </div>
         </form>
       </CardContent>
