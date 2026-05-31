@@ -3,6 +3,7 @@ import { DM_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/nav";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { Toaster } from "sonner";
 
 const dmSans = DM_Sans({
   variable: "--font-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
           <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
             {children}
           </main>
+          <Toaster richColors position="top-right" closeButton />
         </ThemeProvider>
       </body>
     </html>
