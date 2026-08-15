@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.117.1",
     "@base-ui/react": "^1.5.0",
     "@mapbox/mapbox-gl-draw": "^1.5.1",
     "@turf/length": "^7.3.5",
