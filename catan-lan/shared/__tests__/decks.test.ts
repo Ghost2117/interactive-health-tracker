@@ -14,7 +14,7 @@ describe('buildDevDeck', () => {
     const deck = buildDevDeck(count);
     expect(deck).toHaveLength(34);
     const counts = tally(deck);
-    expect(counts).toEqual({ knight: 20, victoryPoint: 6, roadBuilding: 3, yearOfPlenty: 3, monopoly: 2 });
+    expect(counts).toEqual({ knight: 20, victoryPoint: 5, roadBuilding: 3, yearOfPlenty: 3, monopoly: 3 });
   });
 
   it('returns a fresh array each call (callers can safely mutate/shuffle it)', () => {

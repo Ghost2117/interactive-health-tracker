@@ -24,9 +24,9 @@ Status legend: ✅ implemented correctly · 🔧 bug found and fixed in this pas
 | 5-6p: 30 land hexes total = 2 desert, 5 hills, 6 forest, 5 mountains, 6 fields, 6 pasture | ✅ |
 | 5-6p: 28 number tokens (no 7, one extra 2 and 12 vs. doubling, three of most others) | ✅ (approximated distribution) |
 | 5-6p: 11 harbors total = base 9 **+ 1 more generic 3:1 + 1 more wool 2:1** (i.e. 5 generic + 6 resource-specific, with wool appearing twice) | 🔧 was 6 generic + 5 resource-specific (missing the second wool harbor) |
-| Bank: 19 of each resource (base); 5-6p adds 24 more (4 of each non-desert resource) | ✅ (documented as an approximation — see README) |
+| Bank: 19 of each resource (base); 5-6p extension adds 25 resource cards (5 of each of the 5 resources), bringing the total to 24 of each | ✅ |
 | Dev card deck: 14 knight, 5 VP, 2 each of Road Building/Year of Plenty/Monopoly (25 total, base) | ✅ |
-| 5-6p dev cards: +9 (6 knight, 1 monopoly, 1 Year of Plenty, 1 Road Building) | ✅ |
+| 5-6p dev cards: +9 (6 knight, 1 monopoly, 1 Year of Plenty, 1 Road Building) — total 34: 20 knight, 5 VP, 3 each of Road Building/Year of Plenty/Monopoly | 🔧 code had 6 VP/2 monopoly instead of 5 VP/3 monopoly (totals matched at 34 so the bug slipped past a total-only check); fixed to match the extension's card-for-card addition |
 | Piece limits: 5 settlements, 4 cities, 15 roads per player (same at every player count) | ✅ |
 
 ## Setup phase
@@ -120,8 +120,6 @@ Status legend: ✅ implemented correctly · 🔧 bug found and fixed in this pas
 
 ## Known intentional simplifications (documented in README, not "gaps")
 
-- 5-6p bank/dev-card totals approximate the official expansion rather than
-  reproducing exact physical card counts card-for-card.
 - Harbor tiles are placed algorithmically around the coastline in the
   correct ratios, not at the exact physical board positions.
 - Board art is original/abstracted rather than reproducing Catan's

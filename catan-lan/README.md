@@ -111,9 +111,9 @@ for.
 
 ## Known simplifications vs. the physical game
 
-- **5-6 player extension**: bank/dev-card totals approximate the official
-  expansion rather than reproducing exact physical card counts; tile,
-  number, and harbor *composition* matches exactly, but physical placement
+- **5-6 player extension**: tile, number, harbor, bank, and dev-card
+  *composition* all match the physical expansion exactly (card-for-card —
+  see [`docs/rules-audit.md`](docs/rules-audit.md)), but physical placement
   order (dealt face-down, assembled by hand) is replaced with an equivalent
   digital shuffle.
 - **Harbor positions**: placed algorithmically around the coastline in the

@@ -21,12 +21,15 @@ export const BANK_SUPPLY: Record<PlayerCount, number> = {
   6: 24,
 };
 
-// Dev card deck composition. Base matches the physical 25-card deck exactly;
-// the 5-6p total (34) approximates the extension's added cards.
+// Dev card deck composition, matching the physical decks exactly. Base game:
+// 25 cards (14 knight, 5 victory point, 2 each of road building/year of
+// plenty/monopoly). The 5-6p extension adds 9 cards on top (6 knight, 1 each
+// of road building/year of plenty/monopoly) and adds no victory point cards,
+// for a 34-card deck.
 const DEV_DECK_COMPOSITION: Record<PlayerCount, Record<DevCardType, number>> = {
   4: { knight: 14, victoryPoint: 5, roadBuilding: 2, yearOfPlenty: 2, monopoly: 2 },
-  5: { knight: 20, victoryPoint: 6, roadBuilding: 3, yearOfPlenty: 3, monopoly: 2 },
-  6: { knight: 20, victoryPoint: 6, roadBuilding: 3, yearOfPlenty: 3, monopoly: 2 },
+  5: { knight: 20, victoryPoint: 5, roadBuilding: 3, yearOfPlenty: 3, monopoly: 3 },
+  6: { knight: 20, victoryPoint: 5, roadBuilding: 3, yearOfPlenty: 3, monopoly: 3 },
 };
 
 export function buildDevDeck(playerCount: PlayerCount): DevCardType[] {
