@@ -55,15 +55,30 @@ The test suite includes:
 - `client/` — a Vite + React single-page app: lobby screens and an SVG
   board renderer with click-to-build interactions.
 
+## Rules fidelity
+
+Gameplay mechanics were audited rule-by-rule against the official rulebooks
+(base game + 5-6 Player Extension) — see
+[`docs/rules-audit.md`](docs/rules-audit.md) for the full checklist and what
+it found. Ports, in particular: exact harbor composition (4 generic 3:1 + 1
+per resource for 4p; 5 generic + 6 resource-specific — wool appears
+twice — for 5-6p), each harbor's 2:1/3:1 rate only applies to a player who
+has a settlement/city on one of that harbor's two vertices, and a player
+never gets a better rate for a resource they don't hold the matching harbor
+for.
+
 ## Known simplifications vs. the physical game
 
-- **5-6 player extension**: board tile/number/dev-card counts approximate
-  the official expansion; exact physical card ordering isn't reproduced.
-- **Ports**: placed algorithmically around the board's perimeter in the
-  correct ratios (4 generic + 5 resource-specific for 4p; 6 + 5 for 5-6p),
-  not at their exact positions on the physical board.
-- **Dev cards**: match the official timing rule — one per turn, playable
-  before or after rolling, never the turn you bought it, and never during
-  the 5-6p Special Building Phase (which also disallows all trading).
-- Board art is flat-colored hexes rather than illustrated tiles, to avoid
-  reproducing Catan's trademarked artwork.
+- **5-6 player extension**: bank/dev-card totals approximate the official
+  expansion rather than reproducing exact physical card counts; tile,
+  number, and harbor *composition* matches exactly, but physical placement
+  order (dealt face-down, assembled by hand) is replaced with an equivalent
+  digital shuffle.
+- **Harbor positions**: placed algorithmically around the coastline in the
+  correct composition (see above), not at the exact physical board
+  positions.
+- Board art (see `client/src/components/TileArt.tsx`) is original,
+  abstracted iconography — pine trees for forest, rolling mounds for hills,
+  jagged peaks for mountains, wheat for fields, sheep for pasture, dunes and
+  a cactus for desert — rather than reproducing Catan's trademarked
+  illustrations.

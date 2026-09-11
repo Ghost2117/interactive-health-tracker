@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { ClientGameState } from '../../../shared/protocol.js';
 import { PLAYER_COLOR_SWATCH, RESOURCE_COLORS } from '../boardColors.js';
+import { hexPoints, TileArt } from './TileArt.js';
 
 interface Props {
   state: ClientGameState;
@@ -37,6 +38,12 @@ export function BoardView({ state, legalVertexIds, legalEdgeIds, legalTileIds, o
       viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}
       style={{ width: '100%', height: 'auto', maxHeight: '70vh', touchAction: 'manipulation' }}
     >
+      <defs>
+        <clipPath id="hex-clip">
+          <polygon points={hexPoints()} />
+        </clipPath>
+      </defs>
+
       {board.tiles.map((tile) => {
         const points = tile.vertexIds.map((id) => board.vertices[id]).map((v) => `${v.x},${v.y}`).join(' ');
         const cx = tile.vertexIds.reduce((s, id) => s + board.vertices[id].x, 0) / tile.vertexIds.length;
@@ -45,14 +52,11 @@ export function BoardView({ state, legalVertexIds, legalEdgeIds, legalTileIds, o
         const isLegal = legalTileIds?.has(tile.id);
         return (
           <g key={tile.id} onClick={() => isLegal && onTileClick(tile.id)} style={{ cursor: isLegal ? 'pointer' : 'default' }}>
-            <polygon
-              points={points}
-              fill={RESOURCE_COLORS[tile.resource]}
-              stroke="#3a3a3a"
-              strokeWidth={2}
-              opacity={isLegal ? 1 : tile.resource === 'desert' ? 1 : 0.92}
-            />
-            {isLegal && <polygon points={points} fill="#ffffff" opacity={0.25} />}
+            <polygon points={points} fill={RESOURCE_COLORS[tile.resource]} stroke="#3a3a3a" strokeWidth={2} />
+            <g transform={`translate(${cx} ${cy})`} clipPath="url(#hex-clip)">
+              <TileArt resource={tile.resource} tileId={tile.id} />
+            </g>
+            {isLegal && <polygon points={points} fill="#ffffff" opacity={0.3} />}
             {tile.number !== null && (
               <g>
                 <circle cx={cx} cy={cy} r={22} fill="#f5ecd7" stroke="#3a3a3a" strokeWidth={1.5} />

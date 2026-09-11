@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { generateBoard, findRobberStartTile } from '../board.js';
 import { mulberry32 } from '../rng.js';
-import type { PlayerCount } from '../types.js';
+import { RESOURCES, type PlayerCount } from '../types.js';
 
 describe('generateBoard', () => {
   it.each([4, 5, 6] as PlayerCount[])('produces the right tile count for %i players', (count) => {
@@ -63,12 +63,21 @@ describe('generateBoard', () => {
     expect(board.tiles.find((t) => t.id === tileId)?.resource).toBe('desert');
   });
 
-  it.each([4, 5, 6] as PlayerCount[])('assigns the expected number of ports for %i players', (count) => {
+  it.each([4, 5, 6] as PlayerCount[])('assigns the exact official harbor composition for %i players', (count) => {
     const board = generateBoard(count, { rng: mulberry32(9) });
     const expectedTotal = count === 4 ? 9 : 11;
     expect(board.ports.length).toBe(expectedTotal);
+
     const generic = board.ports.filter((p) => p.type === '3:1').length;
-    expect(generic).toBe(count === 4 ? 4 : 6);
+    expect(generic).toBe(count === 4 ? 4 : 5);
+
+    // Exactly one harbor per resource, except 5-6p which has two wool harbors.
+    for (const resource of RESOURCES) {
+      const count5or6Wool = resource === 'wool' ? 2 : 1;
+      const matching = board.ports.filter((p) => p.type === resource).length;
+      expect(matching).toBe(count === 4 ? 1 : count5or6Wool);
+    }
+
     for (const port of board.ports) {
       const edgeExists = Object.values(board.edges).some(
         (e) => e.tileIds.length === 1 && e.vertexIds.includes(port.vertexIds[0]) && e.vertexIds.includes(port.vertexIds[1])

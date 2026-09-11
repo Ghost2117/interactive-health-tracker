@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { applyAction, publicVictoryPoints, totalVictoryPoints } from '../engine.js';
 import { mulberry32 } from '../rng.js';
-import type { GameState } from '../types.js';
+import type { GameState, Resource } from '../types.js';
 import { makeGame, playThroughSetup } from './testHelpers.js';
 
 describe('setup phase', () => {
@@ -124,6 +124,35 @@ describe('turn flow: rolling and production', () => {
     expect(after.dice![0] + after.dice![1]).toBe(7);
     expect(after.phase).toBe('robberDiscard');
     expect(after.discardQueue).toContain(current.id);
+  });
+
+  it('gives a lone entitled player whatever the bank has left, instead of nothing, when supply is short', () => {
+    const current = state.players[state.currentPlayerIndex];
+    // Rig a single, isolated producing tile: clear the board's buildings
+    // and place only a city for the current player, so they're the only
+    // player entitled to this resource on this roll.
+    const tile = state.board.tiles.find((t) => t.resource !== 'desert')!;
+    const vertexId = tile.vertexIds[0];
+    state.buildings = { [vertexId]: { playerId: current.id, type: 'city' } };
+    state.bank[tile.resource as Resource] = 1; // demand will be 2 (city), supply only 1
+
+    const forcedRng = (() => {
+      // Roll dice summing to the tile's number.
+      const n = tile.number!;
+      const d1 = Math.min(6, Math.ceil(n / 2));
+      const d2 = n - d1;
+      const seq = [(d1 - 1) / 6 + 0.001, (d2 - 1) / 6 + 0.001];
+      let i = 0;
+      return () => seq[i++ % seq.length];
+    })();
+
+    const result = applyAction(state, current.id, { type: 'ROLL_DICE' }, { rng: forcedRng });
+    expect(result.ok).toBe(true);
+    const after = result.ok ? result.state : state;
+    expect(after.dice![0] + after.dice![1]).toBe(tile.number);
+    const player = after.players.find((p) => p.id === current.id)!;
+    expect(player.resources[tile.resource as Resource]).toBe(1); // got the 1 left, not 0 and not 2
+    expect(after.bank[tile.resource as Resource]).toBe(0);
   });
 });
 

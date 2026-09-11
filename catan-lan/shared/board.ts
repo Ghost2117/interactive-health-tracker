@@ -1,5 +1,4 @@
 import type { Board, Edge, PlayerCount, PortInfo, PortType, Resource, Tile, Vertex } from './types.js';
-import { RESOURCES } from './types.js';
 import { type Rng, shuffle } from './rng.js';
 
 /**
@@ -16,9 +15,11 @@ const ROW_LENGTHS: Record<PlayerCount, number[]> = {
   6: [3, 4, 5, 6, 5, 4, 3],
 };
 
-// Resource + number tile composition. The 5-6p counts approximate the
-// official "5-6 Player Extension" (30 tiles / 28 numbered + 2 desert);
-// exact physical tile ordering isn't reproduced, only the totals.
+// Resource + number tile composition, matching the official component
+// lists exactly (base game: 19 tiles; 5-6 Player Extension adds 11 more
+// for 30 total). Physical tile *placement order* isn't reproduced (we
+// shuffle digitally instead of dealing physical hexes face-down), only
+// the totals, which is an equivalent randomization.
 const RESOURCE_COUNTS: Record<PlayerCount, Record<Resource | 'desert', number>> = {
   4: { desert: 1, brick: 3, lumber: 4, ore: 3, grain: 4, wool: 4 },
   5: { desert: 2, brick: 5, lumber: 6, ore: 5, grain: 6, wool: 6 },
@@ -31,10 +32,15 @@ const NUMBER_COUNTS: Record<PlayerCount, number[]> = {
   6: [2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12],
 };
 
-const PORT_COUNT: Record<PlayerCount, { generic: number; resource: number }> = {
-  4: { generic: 4, resource: 5 },
-  5: { generic: 6, resource: 5 },
-  6: { generic: 6, resource: 5 },
+// Exact harbor composition per the official component lists. Base game: 4
+// generic 3:1 + one 2:1 per resource (9 total). The 5-6 Player Extension
+// adds exactly 2 more harbors: 1 more generic 3:1 and a second wool 2:1
+// (not one of every resource again) — so the 5-6p total is 5 generic + 6
+// resource-specific, with wool appearing twice.
+const PORT_COMPOSITION: Record<PlayerCount, PortType[]> = {
+  4: ['3:1', '3:1', '3:1', '3:1', 'brick', 'lumber', 'ore', 'grain', 'wool'],
+  5: ['3:1', '3:1', '3:1', '3:1', '3:1', 'brick', 'lumber', 'ore', 'grain', 'wool', 'wool'],
+  6: ['3:1', '3:1', '3:1', '3:1', '3:1', 'brick', 'lumber', 'ore', 'grain', 'wool', 'wool'],
 };
 
 const HEX_SIZE = 100;
@@ -248,13 +254,8 @@ function assignPorts(
     .sort((x, y) => x.angle - y.angle)
     .map((x) => x.edge);
 
-  const { generic, resource } = PORT_COUNT[playerCount];
-  const totalPorts = generic + resource;
-  const types: PortType[] = [
-    ...Array(generic).fill('3:1' as const),
-    ...shuffle(RESOURCES, rng).slice(0, resource),
-  ];
-  const shuffledTypes = shuffle(types, rng);
+  const totalPorts = PORT_COMPOSITION[playerCount].length;
+  const shuffledTypes = shuffle(PORT_COMPOSITION[playerCount], rng);
 
   const ports: PortInfo[] = [];
   const step = ordered.length / totalPorts;

@@ -242,7 +242,18 @@ function distributeProduction(state: GameState, diceSum: number): void {
     if (byPlayer.size === 0) continue;
     const totalDemand = [...byPlayer.values()].reduce((a, b) => a + b, 0);
     if (totalDemand > state.bank[resource]) {
-      log(state, `Bank is short on ${resource}; no one collects it this roll.`);
+      // Official exception: if the shortage affects only a single entitled
+      // player, they still get whatever's left in the bank (not nothing).
+      if (byPlayer.size === 1) {
+        const [[playerId, amount]] = byPlayer;
+        const player = findPlayer(state, playerId)!;
+        const granted = grantFromBank(state, player, resource, amount);
+        if (granted < amount) {
+          log(state, `${player.name} only got ${granted} of ${amount} ${resource} - the bank ran short.`);
+        }
+      } else {
+        log(state, `Bank is short on ${resource}; no one collects it this roll.`);
+      }
       continue;
     }
     for (const [playerId, amount] of byPlayer.entries()) {
