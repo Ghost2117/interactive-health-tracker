@@ -18,6 +18,30 @@ export const RESOURCE_LABELS: Record<Resource | 'desert', string> = {
   desert: 'Desert',
 };
 
+export const RESOURCE_ICONS: Record<Resource, string> = {
+  brick: '🧱',
+  lumber: '🪵',
+  ore: '⛏️',
+  grain: '🌾',
+  wool: '🐑',
+};
+
+export const DEV_CARD_LABELS: Record<string, string> = {
+  knight: 'Knight',
+  roadBuilding: 'Road Building',
+  yearOfPlenty: 'Year of Plenty',
+  monopoly: 'Monopoly',
+  victoryPoint: 'Victory Point',
+};
+
+export const DEV_CARD_ICONS: Record<string, string> = {
+  knight: '⚔️',
+  roadBuilding: '🛤️',
+  yearOfPlenty: '🎁',
+  monopoly: '💰',
+  victoryPoint: '⭐',
+};
+
 export const PLAYER_COLOR_SWATCH: Record<string, string> = {
   red: '#d64545',
   blue: '#3a6bc4',

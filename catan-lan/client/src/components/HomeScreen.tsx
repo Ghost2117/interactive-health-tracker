@@ -23,9 +23,20 @@ export function HomeScreen({ send, error }: { send: (m: ClientMessage) => void; 
   }
 
   return (
-    <div style={{ maxWidth: 420, margin: '40px auto', padding: 16, fontFamily: 'system-ui, sans-serif' }}>
-      <h1 style={{ fontSize: 24 }}>Catan LAN</h1>
-      <p style={{ color: '#555', fontSize: 14 }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div
+        style={{
+          maxWidth: 420,
+          width: '100%',
+          padding: 24,
+          background: 'var(--panel)',
+          border: '1px solid var(--border)',
+          borderRadius: 14,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+        }}
+      >
+      <h1 style={{ fontSize: 26, margin: '0 0 8px' }}>🏝️ Catan LAN</h1>
+      <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
         Play a Catan-style board game with friends on the same WiFi network. One person hosts (Create Game); everyone
         else joins with the room code shown on the host's screen.
       </p>
@@ -95,6 +106,7 @@ export function HomeScreen({ send, error }: { send: (m: ClientMessage) => void; 
           {mode === 'create' ? 'Create Game' : 'Join Game'}
         </button>
       </form>
+      </div>
     </div>
   );
 }
@@ -105,7 +117,7 @@ const inputStyle: React.CSSProperties = {
   padding: '8px 10px',
   marginTop: 4,
   borderRadius: 6,
-  border: '1px solid #ccc',
+  border: '1px solid var(--border)',
   fontSize: 14,
   boxSizing: 'border-box',
 };
@@ -114,7 +126,7 @@ const submitStyle: React.CSSProperties = {
   padding: '10px 16px',
   borderRadius: 6,
   border: 'none',
-  background: '#2f6b3a',
+  background: 'var(--accent)',
   color: '#fff',
   fontSize: 15,
   fontWeight: 600,
@@ -126,8 +138,8 @@ function tabStyle(active: boolean): React.CSSProperties {
     flex: 1,
     padding: '8px 0',
     borderRadius: 6,
-    border: active ? '2px solid #2f6b3a' : '1px solid #ccc',
-    background: active ? '#eaf3ec' : '#fff',
+    border: active ? '2px solid var(--accent)' : '1px solid var(--border)',
+    background: active ? 'var(--accent-light)' : 'var(--panel)',
     fontWeight: active ? 700 : 400,
     cursor: 'pointer',
   };

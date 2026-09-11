@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Action } from '../../../shared/actions.js';
 import type { ClientGameState } from '../../../shared/protocol.js';
 import { RESOURCES, type Resource } from '../../../shared/types.js';
-import { RESOURCE_LABELS } from '../boardColors.js';
+import { RESOURCE_ICONS, RESOURCE_LABELS } from '../boardColors.js';
 
 export function DiscardModal({ state, selfId, dispatch }: { state: ClientGameState; selfId: string; dispatch: (a: Action) => void }) {
   const self = state.players.find((p) => p.id === selfId)!;
@@ -20,7 +20,7 @@ export function DiscardModal({ state, selfId, dispatch }: { state: ClientGameSta
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           {RESOURCES.map((r) => (
             <label key={r} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: 12 }}>
-              {RESOURCE_LABELS[r]} ({self.resources?.[r] ?? 0})
+              {RESOURCE_ICONS[r]} {RESOURCE_LABELS[r]} ({self.resources?.[r] ?? 0})
               <input
                 type="number"
                 min={0}

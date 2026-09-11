@@ -62,8 +62,8 @@ The test suite includes:
 - **Ports**: placed algorithmically around the board's perimeter in the
   correct ratios (4 generic + 5 resource-specific for 4p; 6 + 5 for 5-6p),
   not at their exact positions on the physical board.
-- **Dev cards**: only one may be played per turn, and only after rolling —
-  a common simplification versus the official "any time except the turn
-  you bought it" rule.
+- **Dev cards**: match the official timing rule — one per turn, playable
+  before or after rolling, never the turn you bought it, and never during
+  the 5-6p Special Building Phase (which also disallows all trading).
 - Board art is flat-colored hexes rather than illustrated tiles, to avoid
   reproducing Catan's trademarked artwork.

@@ -440,11 +440,26 @@ export function applyAction(
       break;
   }
 
-  // Every remaining action requires 'main' (or 'specialBuilding' for 5-6p,
-  // which only allows building/trading) — except RESPOND_TRADE, which by
-  // definition comes from a player other than whoever's turn it is.
+  // Every remaining action requires being the acting player's turn (except
+  // RESPOND_TRADE, which by definition comes from someone else) and the
+  // right phase for that *kind* of action:
+  //  - dev cards may be played before OR after rolling ('roll' or 'main'),
+  //    but never during the 5-6p Special Building Phase.
+  //  - trading (bank or player) is only allowed in the normal 'main' phase —
+  //    officially disallowed during the Special Building Phase.
+  //  - building/buying a dev card/ending the turn is allowed in 'main' or
+  //    during the Special Building Phase, but not before rolling.
   const inSpecialBuilding = state.phase === 'specialBuilding';
-  if (state.phase !== 'main' && !inSpecialBuilding) return err('You cannot do that right now');
+  const DEV_CARD_PLAY_ACTIONS = new Set(['PLAY_KNIGHT', 'PLAY_ROAD_BUILDING', 'PLAY_YEAR_OF_PLENTY', 'PLAY_MONOPOLY']);
+  const TRADE_ACTIONS = new Set(['BANK_TRADE', 'OFFER_TRADE', 'RESPOND_TRADE', 'EXECUTE_TRADE', 'CANCEL_TRADE']);
+
+  if (DEV_CARD_PLAY_ACTIONS.has(action.type)) {
+    if (state.phase !== 'main' && state.phase !== 'roll') return err('You cannot do that right now');
+  } else if (TRADE_ACTIONS.has(action.type)) {
+    if (state.phase !== 'main') return err('Trading is not allowed right now');
+  } else if (state.phase !== 'main' && !inSpecialBuilding) {
+    return err('You cannot do that right now');
+  }
   if (action.type !== 'RESPOND_TRADE' && state.players[state.currentPlayerIndex].id !== playerId) {
     return err('Not your turn');
   }
@@ -510,7 +525,6 @@ export function applyAction(
     }
 
     case 'PLAY_KNIGHT': {
-      if (state.phase !== 'main') return err('Knights can only be played on your turn after rolling');
       if (player.playedDevCardThisTurn) return err('You already played a development card this turn');
       const cardIdx = player.devCards.findIndex((c) => c.type === 'knight' && c.boughtOnTurn !== state.turnNumber);
       if (cardIdx === -1) return err('You have no playable knight card');
@@ -526,7 +540,6 @@ export function applyAction(
     }
 
     case 'PLAY_ROAD_BUILDING': {
-      if (state.phase !== 'main') return err('That card can only be played on your turn after rolling');
       if (player.playedDevCardThisTurn) return err('You already played a development card this turn');
       const cardIdx = player.devCards.findIndex((c) => c.type === 'roadBuilding' && c.boughtOnTurn !== state.turnNumber);
       if (cardIdx === -1) return err('You have no playable Road Building card');
@@ -564,7 +577,6 @@ export function applyAction(
     }
 
     case 'PLAY_YEAR_OF_PLENTY': {
-      if (state.phase !== 'main') return err('That card can only be played on your turn after rolling');
       if (player.playedDevCardThisTurn) return err('You already played a development card this turn');
       const cardIdx = player.devCards.findIndex((c) => c.type === 'yearOfPlenty' && c.boughtOnTurn !== state.turnNumber);
       if (cardIdx === -1) return err('You have no playable Year of Plenty card');
@@ -576,7 +588,6 @@ export function applyAction(
     }
 
     case 'PLAY_MONOPOLY': {
-      if (state.phase !== 'main') return err('That card can only be played on your turn after rolling');
       if (player.playedDevCardThisTurn) return err('You already played a development card this turn');
       const cardIdx = player.devCards.findIndex((c) => c.type === 'monopoly' && c.boughtOnTurn !== state.turnNumber);
       if (cardIdx === -1) return err('You have no playable Monopoly card');
@@ -594,6 +605,7 @@ export function applyAction(
     }
 
     case 'BANK_TRADE': {
+      if (action.give === action.want) return err('Choose two different resources');
       const rate = getBankTradeRate(state, player, action.give);
       if (action.giveCount !== rate) return err(`The rate for that resource is ${rate}:1`);
       if (player.resources[action.give] < action.giveCount) return err('Not enough resources');

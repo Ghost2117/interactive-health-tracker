@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Action } from '../../../shared/actions.js';
 import type { ClientGameState } from '../../../shared/protocol.js';
 import { RESOURCES, type Resource } from '../../../shared/types.js';
+import { DEV_CARD_ICONS, RESOURCE_ICONS, RESOURCE_LABELS } from '../boardColors.js';
 import type { BuildMode } from '../legalMoves.js';
 
 const ROAD_COST = { brick: 1, lumber: 1 };
@@ -12,6 +13,10 @@ const DEV_CARD_COST = { ore: 1, grain: 1, wool: 1 };
 function affordable(resources: Record<Resource, number> | null, cost: Partial<Record<Resource, number>>): boolean {
   if (!resources) return false;
   return (Object.entries(cost) as [Resource, number][]).every(([r, n]) => resources[r] >= n);
+}
+
+function costLabel(cost: Partial<Record<Resource, number>>): string {
+  return (Object.entries(cost) as [Resource, number][]).map(([r, n]) => `${RESOURCE_ICONS[r]}×${n}`).join(' ');
 }
 
 interface Props {
@@ -33,99 +38,111 @@ export function ActionBar({ state, selfId, buildMode, setBuildMode, dispatch, on
   const isMyTurn = state.players[state.currentPlayerIndex].id === selfId;
   const resources = self.resources;
 
-  if (state.phase === 'roll' && isMyTurn) {
-    return (
-      <div style={barStyle}>
-        <button style={primaryBtn} onClick={() => dispatch({ type: 'ROLL_DICE' })}>
-          🎲 Roll Dice
-        </button>
-      </div>
-    );
-  }
-
   if (state.phase === 'robberMove' && state.pendingRobberPlayerId === selfId) {
     return (
       <div style={barStyle}>
-        <span style={{ fontSize: 13, color: '#555' }}>You rolled a 7 — click a tile to move the robber.</span>
+        <span style={{ fontSize: 13, color: '#555' }}>🦹 You rolled a 7 — click a tile to move the robber.</span>
       </div>
     );
   }
 
-  const canBuild = (state.phase === 'main' || state.phase === 'specialBuilding') && isMyTurn;
-  if (!canBuild) return null;
+  // Dev cards can be played before or after rolling, but never during the
+  // 5-6p Special Building Phase; everything else needs 'main' or SBP.
+  const canPlayDevCards = isMyTurn && (state.phase === 'roll' || state.phase === 'main');
+  const canBuild = isMyTurn && (state.phase === 'main' || state.phase === 'specialBuilding');
+  const canTrade = isMyTurn && state.phase === 'main';
+
+  if (!canPlayDevCards && !canBuild && !(state.phase === 'roll' && isMyTurn)) return null;
 
   const playableDevCards = new Set((self.devCards ?? []).filter((c) => c.boughtOnTurn !== state.turnNumber).map((c) => c.type));
+  const devCardDisabled = self.playedDevCardThisTurn;
 
   return (
     <div style={barStyle}>
-      <button
-        style={buildMode === 'road' ? activeBtn : affordable(resources, ROAD_COST) ? enabledBtn : disabledBtn}
-        disabled={!affordable(resources, ROAD_COST)}
-        onClick={() => setBuildMode(buildMode === 'road' ? null : 'road')}
-      >
-        Build Road (1 brick, 1 lumber)
-      </button>
-      <button
-        style={buildMode === 'settlement' ? activeBtn : affordable(resources, SETTLEMENT_COST) ? enabledBtn : disabledBtn}
-        disabled={!affordable(resources, SETTLEMENT_COST)}
-        onClick={() => setBuildMode(buildMode === 'settlement' ? null : 'settlement')}
-      >
-        Build Settlement
-      </button>
-      <button
-        style={buildMode === 'city' ? activeBtn : affordable(resources, CITY_COST) ? enabledBtn : disabledBtn}
-        disabled={!affordable(resources, CITY_COST)}
-        onClick={() => setBuildMode(buildMode === 'city' ? null : 'city')}
-      >
-        Build City (3 ore, 2 grain)
-      </button>
-      <button
-        style={affordable(resources, DEV_CARD_COST) && state.devDeckCount > 0 ? enabledBtn : disabledBtn}
-        disabled={!affordable(resources, DEV_CARD_COST) || state.devDeckCount === 0}
-        onClick={() => dispatch({ type: 'BUY_DEV_CARD' })}
-      >
-        Buy Dev Card ({state.devDeckCount} left)
-      </button>
+      {state.phase === 'roll' && isMyTurn && (
+        <button style={primaryBtn} onClick={() => dispatch({ type: 'ROLL_DICE' })}>
+          🎲 Roll Dice
+        </button>
+      )}
 
-      {state.phase === 'main' && (
+      {canPlayDevCards && (
         <>
           <button
-            style={buildMode === 'robberKnight' ? activeBtn : playableDevCards.has('knight') && !self.playedDevCardThisTurn ? enabledBtn : disabledBtn}
-            disabled={!playableDevCards.has('knight') || self.playedDevCardThisTurn}
+            style={buildMode === 'robberKnight' ? activeBtn : playableDevCards.has('knight') && !devCardDisabled ? enabledBtn : disabledBtn}
+            disabled={!playableDevCards.has('knight') || devCardDisabled}
             onClick={() => setBuildMode(buildMode === 'robberKnight' ? null : 'robberKnight')}
           >
-            Play Knight
+            {DEV_CARD_ICONS.knight} Knight
           </button>
           <button
-            style={buildMode === 'roadBuilding' ? activeBtn : playableDevCards.has('roadBuilding') && !self.playedDevCardThisTurn ? enabledBtn : disabledBtn}
-            disabled={!playableDevCards.has('roadBuilding') || self.playedDevCardThisTurn}
+            style={buildMode === 'roadBuilding' ? activeBtn : playableDevCards.has('roadBuilding') && !devCardDisabled ? enabledBtn : disabledBtn}
+            disabled={!playableDevCards.has('roadBuilding') || devCardDisabled}
             onClick={() => setBuildMode(buildMode === 'roadBuilding' ? null : 'roadBuilding')}
           >
-            Play Road Building
+            {DEV_CARD_ICONS.roadBuilding} Road Building
           </button>
           <button
-            style={playableDevCards.has('yearOfPlenty') && !self.playedDevCardThisTurn ? enabledBtn : disabledBtn}
-            disabled={!playableDevCards.has('yearOfPlenty') || self.playedDevCardThisTurn}
+            style={playableDevCards.has('yearOfPlenty') && !devCardDisabled ? enabledBtn : disabledBtn}
+            disabled={!playableDevCards.has('yearOfPlenty') || devCardDisabled}
             onClick={() => setShowYearOfPlenty((s) => !s)}
           >
-            Play Year of Plenty
+            {DEV_CARD_ICONS.yearOfPlenty} Year of Plenty
           </button>
           <button
-            style={playableDevCards.has('monopoly') && !self.playedDevCardThisTurn ? enabledBtn : disabledBtn}
-            disabled={!playableDevCards.has('monopoly') || self.playedDevCardThisTurn}
+            style={playableDevCards.has('monopoly') && !devCardDisabled ? enabledBtn : disabledBtn}
+            disabled={!playableDevCards.has('monopoly') || devCardDisabled}
             onClick={() => setShowMonopoly((s) => !s)}
           >
-            Play Monopoly
-          </button>
-          <button style={enabledBtn} onClick={onOpenTrade}>
-            Trade
+            {DEV_CARD_ICONS.monopoly} Monopoly
           </button>
         </>
       )}
 
-      <button style={{ ...enabledBtn, marginLeft: 'auto' }} onClick={() => dispatch({ type: 'END_TURN' })}>
-        {state.phase === 'specialBuilding' ? 'Pass Special Build' : 'End Turn'}
-      </button>
+      {canBuild && (
+        <>
+          <span style={dividerStyle} />
+          <button
+            style={buildMode === 'road' ? activeBtn : affordable(resources, ROAD_COST) ? enabledBtn : disabledBtn}
+            disabled={!affordable(resources, ROAD_COST)}
+            onClick={() => setBuildMode(buildMode === 'road' ? null : 'road')}
+          >
+            🛣️ Road {costLabel(ROAD_COST)}
+          </button>
+          <button
+            style={buildMode === 'settlement' ? activeBtn : affordable(resources, SETTLEMENT_COST) ? enabledBtn : disabledBtn}
+            disabled={!affordable(resources, SETTLEMENT_COST)}
+            onClick={() => setBuildMode(buildMode === 'settlement' ? null : 'settlement')}
+          >
+            🏠 Settlement {costLabel(SETTLEMENT_COST)}
+          </button>
+          <button
+            style={buildMode === 'city' ? activeBtn : affordable(resources, CITY_COST) ? enabledBtn : disabledBtn}
+            disabled={!affordable(resources, CITY_COST)}
+            onClick={() => setBuildMode(buildMode === 'city' ? null : 'city')}
+          >
+            🏛️ City {costLabel(CITY_COST)}
+          </button>
+          <button
+            style={affordable(resources, DEV_CARD_COST) && state.devDeckCount > 0 ? enabledBtn : disabledBtn}
+            disabled={!affordable(resources, DEV_CARD_COST) || state.devDeckCount === 0}
+            onClick={() => dispatch({ type: 'BUY_DEV_CARD' })}
+          >
+            🃏 Dev Card {costLabel(DEV_CARD_COST)} ({state.devDeckCount} left)
+          </button>
+        </>
+      )}
+
+      {canTrade && (
+        <button style={enabledBtn} onClick={onOpenTrade}>
+          🔁 Trade
+        </button>
+      )}
+
+      {canBuild && (
+        <button style={{ ...enabledBtn, marginLeft: 'auto' }} onClick={() => dispatch({ type: 'END_TURN' })}>
+          {state.phase === 'specialBuilding' ? 'Pass Special Build ⏭️' : 'End Turn ⏭️'}
+        </button>
+      )}
 
       {buildMode === 'roadBuilding' && (
         <div style={{ fontSize: 12, color: '#555', width: '100%' }}>
@@ -140,14 +157,14 @@ export function ActionBar({ state, selfId, buildMode, setBuildMode, dispatch, on
           <select value={yopChoice[0]} onChange={(e) => setYopChoice([e.target.value as Resource, yopChoice[1]])}>
             {RESOURCES.map((r) => (
               <option key={r} value={r}>
-                {r}
+                {RESOURCE_ICONS[r]} {RESOURCE_LABELS[r]}
               </option>
             ))}
           </select>
           <select value={yopChoice[1]} onChange={(e) => setYopChoice([yopChoice[0], e.target.value as Resource])}>
             {RESOURCES.map((r) => (
               <option key={r} value={r}>
-                {r}
+                {RESOURCE_ICONS[r]} {RESOURCE_LABELS[r]}
               </option>
             ))}
           </select>
@@ -160,6 +177,9 @@ export function ActionBar({ state, selfId, buildMode, setBuildMode, dispatch, on
           >
             Confirm
           </button>
+          <button style={ghostBtn} onClick={() => setShowYearOfPlenty(false)}>
+            Cancel
+          </button>
         </div>
       )}
 
@@ -169,7 +189,7 @@ export function ActionBar({ state, selfId, buildMode, setBuildMode, dispatch, on
           <select value={monopolyChoice} onChange={(e) => setMonopolyChoice(e.target.value as Resource)}>
             {RESOURCES.map((r) => (
               <option key={r} value={r}>
-                {r}
+                {RESOURCE_ICONS[r]} {RESOURCE_LABELS[r]}
               </option>
             ))}
           </select>
@@ -181,6 +201,9 @@ export function ActionBar({ state, selfId, buildMode, setBuildMode, dispatch, on
             }}
           >
             Confirm
+          </button>
+          <button style={ghostBtn} onClick={() => setShowMonopoly(false)}>
+            Cancel
           </button>
         </div>
       )}
@@ -205,8 +228,15 @@ const barStyle: React.CSSProperties = {
   gap: 8,
   alignItems: 'center',
   padding: '10px 0',
-  borderTop: '1px solid #ddd',
-  borderBottom: '1px solid #ddd',
+  borderTop: '1px solid var(--border)',
+  borderBottom: '1px solid var(--border)',
+};
+
+const dividerStyle: React.CSSProperties = {
+  width: 1,
+  alignSelf: 'stretch',
+  background: 'var(--border)',
+  margin: '0 2px',
 };
 
 const inlineFormStyle: React.CSSProperties = {
@@ -225,6 +255,17 @@ const enabledBtn: React.CSSProperties = {
   color: '#2f6b3a',
   cursor: 'pointer',
   fontSize: 13,
+  whiteSpace: 'nowrap',
+};
+
+const ghostBtn: React.CSSProperties = {
+  padding: '8px 12px',
+  borderRadius: 6,
+  border: '1px solid #ccc',
+  background: '#fff',
+  color: '#666',
+  cursor: 'pointer',
+  fontSize: 13,
 };
 
 const activeBtn: React.CSSProperties = { ...enabledBtn, background: '#2f6b3a', color: '#fff' };
@@ -232,11 +273,12 @@ const activeBtn: React.CSSProperties = { ...enabledBtn, background: '#2f6b3a', c
 const disabledBtn: React.CSSProperties = {
   padding: '8px 12px',
   borderRadius: 6,
-  border: '1px solid #ccc',
-  background: '#f0f0f0',
-  color: '#999',
+  border: '1px solid #ddd',
+  background: '#f2f2f2',
+  color: '#aaa',
   cursor: 'not-allowed',
   fontSize: 13,
+  whiteSpace: 'nowrap',
 };
 
-const primaryBtn: React.CSSProperties = { ...enabledBtn, fontSize: 16, padding: '10px 18px' };
+const primaryBtn: React.CSSProperties = { ...enabledBtn, fontSize: 16, padding: '10px 18px', fontWeight: 700 };

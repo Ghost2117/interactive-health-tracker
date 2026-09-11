@@ -6,9 +6,20 @@ export function LobbyScreen({ lobby, selfId, send }: { lobby: LobbyState; selfId
   const joinUrl = `${location.protocol}//${location.host}`;
 
   return (
-    <div style={{ maxWidth: 480, margin: '40px auto', padding: 16, fontFamily: 'system-ui, sans-serif' }}>
-      <h1 style={{ fontSize: 24 }}>Lobby</h1>
-      <p style={{ fontSize: 14, color: '#555' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div
+        style={{
+          maxWidth: 480,
+          width: '100%',
+          padding: 24,
+          background: 'var(--panel)',
+          border: '1px solid var(--border)',
+          borderRadius: 14,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+        }}
+      >
+      <h1 style={{ fontSize: 26, margin: '0 0 8px' }}>🛋️ Lobby</h1>
+      <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
         Have other players open <strong>{joinUrl}</strong> on this WiFi network, choose "Join Game", and enter the code
         below.
       </p>
@@ -20,6 +31,7 @@ export function LobbyScreen({ lobby, selfId, send }: { lobby: LobbyState; selfId
           textAlign: 'center',
           padding: '16px 0',
           background: '#f5ecd7',
+          border: '1px solid var(--border)',
           borderRadius: 8,
           margin: '12px 0',
         }}
@@ -27,7 +39,7 @@ export function LobbyScreen({ lobby, selfId, send }: { lobby: LobbyState; selfId
         {lobby.roomCode}
       </div>
 
-      <div style={{ fontSize: 14, color: '#555', marginBottom: 8 }}>
+      <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 8 }}>
         {lobby.players.length} / {lobby.playerCount} players joined
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -40,7 +52,7 @@ export function LobbyScreen({ lobby, selfId, send }: { lobby: LobbyState; selfId
               gap: 8,
               padding: '8px 10px',
               borderRadius: 6,
-              border: '1px solid #ddd',
+              border: '1px solid var(--border)',
               opacity: p.connected ? 1 : 0.5,
             }}
           >
@@ -54,8 +66,8 @@ export function LobbyScreen({ lobby, selfId, send }: { lobby: LobbyState; selfId
               }}
             />
             <strong>{p.name}</strong>
-            {p.id === selfId && <span style={{ color: '#666' }}>(you)</span>}
-            {p.isHost && <span style={{ color: '#666' }}>host</span>}
+            {p.id === selfId && <span style={{ color: 'var(--text-muted)' }}>(you)</span>}
+            {p.isHost && <span style={{ color: 'var(--text-muted)' }}>host</span>}
             {!p.connected && <span style={{ color: '#a00', fontSize: 12 }}>disconnected</span>}
           </div>
         ))}
@@ -71,7 +83,7 @@ export function LobbyScreen({ lobby, selfId, send }: { lobby: LobbyState; selfId
             padding: '10px 0',
             borderRadius: 6,
             border: 'none',
-            background: lobby.players.length === lobby.playerCount ? '#2f6b3a' : '#aaa',
+            background: lobby.players.length === lobby.playerCount ? 'var(--accent)' : '#aaa',
             color: '#fff',
             fontSize: 16,
             fontWeight: 700,
@@ -81,8 +93,9 @@ export function LobbyScreen({ lobby, selfId, send }: { lobby: LobbyState; selfId
           {lobby.players.length === lobby.playerCount ? 'Start Game' : `Waiting for ${lobby.playerCount - lobby.players.length} more player(s)`}
         </button>
       ) : (
-        <p style={{ marginTop: 16, color: '#555' }}>Waiting for the host to start the game...</p>
+        <p style={{ marginTop: 16, color: 'var(--text-muted)' }}>Waiting for the host to start the game...</p>
       )}
+      </div>
     </div>
   );
 }

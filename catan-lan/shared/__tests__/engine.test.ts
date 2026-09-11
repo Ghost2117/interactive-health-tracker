@@ -323,6 +323,34 @@ describe('development cards', () => {
     const r2 = applyAction(s2, current.id, { type: 'PLAY_MONOPOLY', resource: 'wool' });
     expect(r2.ok).toBe(false);
   });
+
+  it('dev cards may be played before rolling, on the "roll" phase', () => {
+    const state = playThroughSetup(makeGame(4, 56), applyAction);
+    expect(state.phase).toBe('roll');
+    const current = state.players[state.currentPlayerIndex];
+    current.devCards = [{ type: 'monopoly', boughtOnTurn: 0 }];
+    current.resources.wool = 0;
+    for (const p of state.players) {
+      if (p.id !== current.id) p.resources.wool = 2;
+    }
+    const result = applyAction(state, current.id, { type: 'PLAY_MONOPOLY', resource: 'wool' });
+    expect(result.ok).toBe(true);
+    const after = result.ok ? result.state : state;
+    expect(after.phase).toBe('roll'); // playing a dev card doesn't consume the roll
+    const player = after.players.find((p) => p.id === current.id)!;
+    expect(player.resources.wool).toBe(6);
+  });
+
+  it('rejects playing a dev card during the robber/discard phases', () => {
+    let state = playThroughSetup(makeGame(4, 57), applyAction);
+    const current = state.players[state.currentPlayerIndex];
+    current.devCards = [{ type: 'knight', boughtOnTurn: 0 }];
+    state.phase = 'robberDiscard';
+    state.discardQueue = [state.players[1].id];
+    const targetTile = state.board.tiles.find((t) => t.id !== state.robberTileId)!;
+    const result = applyAction(state, current.id, { type: 'PLAY_KNIGHT', tileId: targetTile.id });
+    expect(result.ok).toBe(false);
+  });
 });
 
 describe('bank and player trades', () => {
@@ -359,6 +387,15 @@ describe('bank and player trades', () => {
       want: 'ore',
       giveCount: 3,
     });
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects trading a resource for itself with the bank', () => {
+    let state = playThroughSetup(makeGame(4, 63), applyAction);
+    state.phase = 'main';
+    const current = state.players[state.currentPlayerIndex];
+    current.resources = { brick: 0, lumber: 4, ore: 0, grain: 0, wool: 0 };
+    const result = applyAction(state, current.id, { type: 'BANK_TRADE', give: 'lumber', want: 'lumber', giveCount: 4 });
     expect(result.ok).toBe(false);
   });
 
@@ -432,6 +469,38 @@ describe('turn rotation', () => {
     }
     expect(s.phase).toBe('roll');
     expect(s.currentPlayerIndex).toBe((startingIdx + 1) % 6);
+  });
+
+  it('Special Building Phase allows building but not trading or playing dev cards', () => {
+    let state = playThroughSetup(makeGame(6, 72), applyAction);
+    state.phase = 'specialBuilding';
+    const active = state.players[state.currentPlayerIndex];
+    active.resources = { brick: 4, lumber: 4, ore: 4, grain: 4, wool: 4 };
+    active.devCards = [{ type: 'knight', boughtOnTurn: 0 }];
+    state.specialBuildQueue = state.players.filter((p) => p.id !== active.id).map((p) => p.id);
+    state.postSpecialBuildingIndex = 0;
+
+    const ownedVertex = Object.entries(state.buildings).find(([, b]) => b.playerId === active.id)![0];
+    const edgeId = state.board.vertices[ownedVertex].edgeIds.find((e) => !state.roads[e])!;
+    const buildResult = applyAction(state, active.id, { type: 'BUILD_ROAD', edgeId });
+    expect(buildResult.ok).toBe(true);
+
+    const bankTradeResult = applyAction(state, active.id, {
+      type: 'BANK_TRADE',
+      give: 'brick',
+      want: 'ore',
+      giveCount: 4,
+    });
+    expect(bankTradeResult.ok).toBe(false);
+
+    const offerResult = applyAction(state, active.id, { type: 'OFFER_TRADE', give: { brick: 1 }, want: { ore: 1 } });
+    expect(offerResult.ok).toBe(false);
+
+    const knightResult = applyAction(state, active.id, {
+      type: 'PLAY_KNIGHT',
+      tileId: state.board.tiles.find((t) => t.id !== state.robberTileId)!.id,
+    });
+    expect(knightResult.ok).toBe(false);
   });
 });
 

@@ -3,7 +3,7 @@ import type { Action } from '../../../shared/actions.js';
 import { getBankTradeRate } from '../../../shared/engine.js';
 import type { ClientGameState } from '../../../shared/protocol.js';
 import { RESOURCES, type Resource } from '../../../shared/types.js';
-import { RESOURCE_LABELS } from '../boardColors.js';
+import { RESOURCE_ICONS, RESOURCE_LABELS } from '../boardColors.js';
 
 interface Props {
   state: ClientGameState;
@@ -50,7 +50,7 @@ export function TradePanel({ state, selfId, dispatch, onClose }: Props) {
             <select value={bankGive} onChange={(e) => setBankGive(e.target.value as Resource)}>
               {RESOURCES.map((r) => (
                 <option key={r} value={r}>
-                  {RESOURCE_LABELS[r]}
+                  {RESOURCE_ICONS[r]} {RESOURCE_LABELS[r]}
                 </option>
               ))}
             </select>
@@ -58,7 +58,7 @@ export function TradePanel({ state, selfId, dispatch, onClose }: Props) {
             <select value={bankWant} onChange={(e) => setBankWant(e.target.value as Resource)}>
               {RESOURCES.map((r) => (
                 <option key={r} value={r}>
-                  {RESOURCE_LABELS[r]}
+                  {RESOURCE_ICONS[r]} {RESOURCE_LABELS[r]}
                 </option>
               ))}
             </select>
@@ -172,7 +172,7 @@ function ResourceAmountGrid({
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {RESOURCES.map((r) => (
           <label key={r} style={{ fontSize: 12, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {RESOURCE_LABELS[r]}
+            {RESOURCE_ICONS[r]} {RESOURCE_LABELS[r]}
             <input
               type="number"
               min={0}
