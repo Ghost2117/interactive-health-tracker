@@ -23,7 +23,7 @@ import {
 } from './legalMoves.js';
 
 export default function App() {
-  const { state: conn, send, clearActionError } = useConnection();
+  const { state: conn, send, leaveSession, clearActionError } = useConnection();
   const [buildMode, setBuildMode] = useState<BuildMode>(null);
   const [pendingSetupVertex, setPendingSetupVertex] = useState<string | null>(null);
   const [roadBuildingEdges, setRoadBuildingEdges] = useState<string[]>([]);
@@ -59,14 +59,32 @@ export default function App() {
     return { vertices: null, edges: null, tiles: null } as const;
   }, [state, selfId, buildMode, pendingSetupVertex]);
 
+  const reconnectingBanner = conn.status === 'reconnecting' && (
+    <div style={reconnectingBannerStyle}>🔌 Connection lost — reconnecting…</div>
+  );
+
   if (conn.status === 'connecting') {
     return <Centered>Connecting...</Centered>;
   }
   if (!selfId) {
-    return <HomeScreen send={send} error={conn.error} />;
+    return (
+      <>
+        {reconnectingBanner}
+        <HomeScreen send={send} error={conn.error} />
+      </>
+    );
   }
   if (!state) {
-    return conn.lobby ? <LobbyScreen lobby={conn.lobby} selfId={selfId} send={send} /> : <Centered>Loading lobby...</Centered>;
+    return (
+      <>
+        {reconnectingBanner}
+        {conn.lobby ? (
+          <LobbyScreen lobby={conn.lobby} selfId={selfId} send={send} onLeave={leaveSession} />
+        ) : (
+          <Centered>Loading lobby...</Centered>
+        )}
+      </>
+    );
   }
 
   function dispatch(action: Action) {
@@ -131,9 +149,15 @@ export default function App() {
 
   return (
     <div style={{ maxWidth: 1040, margin: '0 auto', padding: '12px 16px 32px' }}>
+      {reconnectingBanner}
       <header style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <h1 style={{ fontSize: 20, margin: '6px 0' }}>🏝️ Catan LAN — Room {state.roomCode}</h1>
-        <PhaseBadge state={state} isMyTurn={isMyTurn} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <PhaseBadge state={state} isMyTurn={isMyTurn} />
+          <button onClick={leaveSession} style={leaveBtnStyle} title="Leave this game and return to the home screen">
+            Leave Game
+          </button>
+        </div>
       </header>
 
       <PlayerDock state={state} />
@@ -150,6 +174,9 @@ export default function App() {
           }}
         >
           <h2 style={{ margin: 0 }}>🏆 {winner.name} wins!</h2>
+          <button onClick={leaveSession} style={{ ...leaveBtnStyle, marginTop: 12, fontSize: 14 }}>
+            Play Again (new game)
+          </button>
         </div>
       )}
 
@@ -248,6 +275,27 @@ function PhaseBadge({ state, isMyTurn }: { state: ClientGameState; isMyTurn: boo
 function Centered({ children }: { children: React.ReactNode }) {
   return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>{children}</div>;
 }
+
+const reconnectingBannerStyle: React.CSSProperties = {
+  fontSize: 13,
+  fontWeight: 600,
+  padding: '8px 12px',
+  background: '#fff3cd',
+  border: '1px solid #f0c96b',
+  borderRadius: 8,
+  margin: '8px 0',
+  textAlign: 'center',
+};
+
+const leaveBtnStyle: React.CSSProperties = {
+  fontSize: 12,
+  padding: '5px 10px',
+  borderRadius: 6,
+  border: '1px solid var(--border)',
+  background: 'var(--panel)',
+  color: 'var(--text-muted)',
+  cursor: 'pointer',
+};
 
 const cardStyle: React.CSSProperties = {
   background: 'var(--panel)',

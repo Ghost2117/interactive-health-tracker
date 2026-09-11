@@ -35,11 +35,21 @@ export class Room {
     return this.players.length >= this.playerCount;
   }
 
-  addPlayer(name: string, color: string, socket: WebSocket): RoomPlayer {
+  addPlayer(name: string, requestedColor: string, socket: WebSocket): RoomPlayer {
+    const color = this.resolveColor(requestedColor);
     const player: RoomPlayer = { id: uuidv4(), token: uuidv4(), name, color, connected: true, socket };
     this.players.push(player);
     if (!this.hostId) this.hostId = player.id;
     return player;
+  }
+
+  /** Falls back to the next unused color instead of letting two players end
+   *  up visually identical on the board. There are exactly as many colors
+   *  (6) as the max player count, so one is always free. */
+  private resolveColor(requestedColor: string): string {
+    const taken = new Set(this.players.map((p) => p.color));
+    if (SEAT_COLORS.includes(requestedColor) && !taken.has(requestedColor)) return requestedColor;
+    return SEAT_COLORS.find((c) => !taken.has(c)) ?? requestedColor;
   }
 
   reconnect(playerId: string, token: string, socket: WebSocket): RoomPlayer | null {
@@ -63,6 +73,13 @@ export class Room {
     if (this.state) {
       const gamePlayer = this.state.players.find((p) => p.id === playerId);
       if (gamePlayer) gamePlayer.connected = false;
+    }
+    // If the host drops before the game starts, nobody else can ever start
+    // it — hand the host badge to another connected player so the lobby
+    // isn't permanently stuck.
+    if (!this.started && playerId === this.hostId) {
+      const nextHost = this.players.find((p) => p.connected);
+      if (nextHost) this.hostId = nextHost.id;
     }
   }
 

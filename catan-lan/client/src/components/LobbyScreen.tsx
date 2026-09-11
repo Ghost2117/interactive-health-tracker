@@ -1,7 +1,17 @@
 import type { ClientMessage, LobbyState } from '../../../shared/protocol.js';
 import { PLAYER_COLOR_SWATCH } from '../boardColors.js';
 
-export function LobbyScreen({ lobby, selfId, send }: { lobby: LobbyState; selfId: string; send: (m: ClientMessage) => void }) {
+export function LobbyScreen({
+  lobby,
+  selfId,
+  send,
+  onLeave,
+}: {
+  lobby: LobbyState;
+  selfId: string;
+  send: (m: ClientMessage) => void;
+  onLeave: () => void;
+}) {
   const isHost = lobby.hostId === selfId;
   const joinUrl = `${location.protocol}//${location.host}`;
 
@@ -18,7 +28,23 @@ export function LobbyScreen({ lobby, selfId, send }: { lobby: LobbyState; selfId
           boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
         }}
       >
-      <h1 style={{ fontSize: 26, margin: '0 0 8px' }}>🛋️ Lobby</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <h1 style={{ fontSize: 26, margin: '0 0 8px' }}>🛋️ Lobby</h1>
+        <button
+          onClick={onLeave}
+          style={{
+            fontSize: 12,
+            padding: '5px 10px',
+            borderRadius: 6,
+            border: '1px solid var(--border)',
+            background: 'var(--panel)',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+          }}
+        >
+          Leave
+        </button>
+      </div>
       <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
         Have other players open <strong>{joinUrl}</strong> on this WiFi network, choose "Join Game", and enter the code
         below.
