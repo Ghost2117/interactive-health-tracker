@@ -2,92 +2,28 @@ import { createServer, type Server } from 'node:http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
 import type { Action, ClientGameState, ClientMessage, PlayerCount, ServerMessage } from '../../shared/index.js';
-import { Lobby } from '../lobby.js';
+import { attachGameServer } from '../gameServer.js';
+import type { Lobby } from '../lobby.js';
 
 /**
- * End-to-end test: real HTTP + WebSocket server, real client sockets, no
- * shortcuts through the engine. This is the closest thing to "actually
- * launch it and have four browsers join over the network" that a test can
- * exercise headlessly.
+ * End-to-end test: the *real* server module (attachGameServer, exactly what
+ * server/index.ts wires up in production) attached to a real HTTP server on
+ * an ephemeral port, driven by real WebSocket client sockets. No
+ * reimplementation of the protocol handling here — if this file passes, the
+ * shipped server code is what was actually exercised.
  */
 
 let httpServer: Server;
 let wss: WebSocketServer;
+let lobby: Lobby;
 let port: number;
 
 beforeEach(async () => {
-  const lobby = new Lobby();
-  const connections = new WeakMap<WebSocket, { roomCode: string; playerId: string }>();
-
   httpServer = createServer((_req, res) => {
     res.writeHead(404);
     res.end();
   });
-  wss = new WebSocketServer({ server: httpServer });
-
-  wss.on('connection', (ws) => {
-    ws.on('message', (raw) => {
-      const message: ClientMessage = JSON.parse(raw.toString());
-      handle(ws, message);
-    });
-    ws.on('close', () => {
-      const conn = connections.get(ws);
-      if (!conn) return;
-      const room = lobby.get(conn.roomCode);
-      room?.disconnect(conn.playerId);
-      if (room?.started) room.broadcastGameState();
-      else room?.broadcastLobby();
-    });
-  });
-
-  function handle(ws: WebSocket, message: ClientMessage) {
-    switch (message.type) {
-      case 'CREATE_ROOM': {
-        const room = lobby.createRoom(message.playerCount);
-        const player = room.addPlayer(message.name, message.color, ws);
-        connections.set(ws, { roomCode: room.code, playerId: player.id });
-        ws.send(JSON.stringify({ type: 'JOINED', roomCode: room.code, playerId: player.id, playerToken: player.token }));
-        room.broadcastLobby();
-        return;
-      }
-      case 'JOIN_ROOM': {
-        const room = lobby.get(message.roomCode);
-        if (!room) {
-          ws.send(JSON.stringify({ type: 'ERROR', message: 'no room' }));
-          return;
-        }
-        const player = room.addPlayer(message.name, message.color, ws);
-        connections.set(ws, { roomCode: room.code, playerId: player.id });
-        ws.send(JSON.stringify({ type: 'JOINED', roomCode: room.code, playerId: player.id, playerToken: player.token }));
-        room.broadcastLobby();
-        return;
-      }
-      case 'START_GAME': {
-        const conn = connections.get(ws)!;
-        const room = lobby.get(conn.roomCode)!;
-        const result = room.start();
-        if (!result.ok) {
-          ws.send(JSON.stringify({ type: 'ERROR', message: result.error }));
-          return;
-        }
-        room.broadcastGameState();
-        return;
-      }
-      case 'ACTION': {
-        const conn = connections.get(ws)!;
-        const room = lobby.get(conn.roomCode)!;
-        const result = room.applyPlayerAction(conn.playerId, message.action);
-        if (!result.ok) {
-          ws.send(JSON.stringify({ type: 'ACTION_ERROR', error: result.error }));
-          return;
-        }
-        room.broadcastGameState();
-        return;
-      }
-      default:
-        return;
-    }
-  }
+  ({ wss, lobby } = attachGameServer(httpServer));
 
   await new Promise<void>((resolve) => httpServer.listen(0, '127.0.0.1', resolve));
   const address = httpServer.address();
@@ -304,4 +240,195 @@ describe('server integration', () => {
     expect(clients[0].latestState?.phase).toBe('roll');
     clients.forEach((c) => c.close());
   }, 20000);
+
+  describe('error handling', () => {
+    it('replies with an ERROR instead of crashing on malformed JSON', async () => {
+      const client = new TestClient(port);
+      await client.waitForOpen();
+      client.ws.send('{not valid json');
+      const errorMsg = await client.waitFor((m) => m.type === 'ERROR');
+      expect(errorMsg).toMatchObject({ type: 'ERROR', message: 'Malformed message' });
+      // The connection must still be usable afterwards - not dead.
+      client.send({ type: 'CREATE_ROOM', name: 'Alice', color: 'red', playerCount: 4 });
+      await client.waitFor((m) => m.type === 'JOINED');
+      client.close();
+    });
+
+    it('rejects an invalid player count on CREATE_ROOM', async () => {
+      const client = new TestClient(port);
+      await client.waitForOpen();
+      // @ts-expect-error deliberately invalid for the test
+      client.send({ type: 'CREATE_ROOM', name: 'Alice', color: 'red', playerCount: 3 });
+      const errorMsg = await client.waitFor((m) => m.type === 'ERROR');
+      expect(errorMsg).toMatchObject({ type: 'ERROR', message: expect.stringContaining('4, 5, or 6') });
+      client.close();
+    });
+
+    it('rejects JOIN_ROOM with an unknown room code', async () => {
+      const client = new TestClient(port);
+      await client.waitForOpen();
+      client.send({ type: 'JOIN_ROOM', roomCode: 'ZZZZ', name: 'Bob', color: 'blue' });
+      const errorMsg = await client.waitFor((m) => m.type === 'ERROR');
+      expect(errorMsg).toMatchObject({ type: 'ERROR', message: expect.stringContaining('No game found') });
+      client.close();
+    });
+
+    it('rejects JOIN_ROOM once the lobby is full', async () => {
+      const clients = await connectPlayers(4);
+      const extra = new TestClient(port);
+      await extra.waitForOpen();
+      extra.send({ type: 'JOIN_ROOM', roomCode: clients[0].roomCode, name: 'Extra', color: 'brown' });
+      const errorMsg = await extra.waitFor((m) => m.type === 'ERROR');
+      expect(errorMsg).toMatchObject({ type: 'ERROR', message: expect.stringContaining('full') });
+      clients.forEach((c) => c.close());
+      extra.close();
+    });
+
+    it('rejects JOIN_ROOM once the game has already started', async () => {
+      const clients = await connectPlayers(4);
+      clients[0].send({ type: 'START_GAME' });
+      await Promise.all(clients.map((c) => c.waitFor((m) => m.type === 'GAME_STATE')));
+
+      const latecomer = new TestClient(port);
+      await latecomer.waitForOpen();
+      latecomer.send({ type: 'JOIN_ROOM', roomCode: clients[0].roomCode, name: 'Late', color: 'brown' });
+      const errorMsg = await latecomer.waitFor((m) => m.type === 'ERROR');
+      expect(errorMsg).toMatchObject({ type: 'ERROR', message: expect.stringContaining('already started') });
+      clients.forEach((c) => c.close());
+      latecomer.close();
+    });
+
+    it('only lets the host start the game', async () => {
+      const clients = await connectPlayers(4);
+      const nonHost = clients[1];
+      nonHost.send({ type: 'START_GAME' });
+      const errorMsg = await nonHost.waitFor((m) => m.type === 'ERROR');
+      expect(errorMsg).toMatchObject({ type: 'ERROR', message: expect.stringContaining('host') });
+      expect(nonHost.messages.some((m) => m.type === 'GAME_STATE')).toBe(false);
+      clients.forEach((c) => c.close());
+    });
+
+    it('rejects starting with too few players', async () => {
+      const clients: TestClient[] = [];
+      for (let i = 0; i < 2; i++) {
+        const c = new TestClient(port);
+        await c.waitForOpen();
+        clients.push(c);
+      }
+      clients[0].send({ type: 'CREATE_ROOM', name: 'Solo', color: 'red', playerCount: 4 });
+      await clients[0].waitFor((m) => m.type === 'JOINED');
+      clients[0].send({ type: 'START_GAME' });
+      const errorMsg = await clients[0].waitFor((m) => m.type === 'ERROR');
+      expect(errorMsg).toMatchObject({ type: 'ERROR', message: expect.stringContaining('4 players') });
+      clients.forEach((c) => c.close());
+    });
+
+    it('rejects RECONNECT with a bad token', async () => {
+      const clients = await connectPlayers(4);
+      const impostor = new TestClient(port);
+      await impostor.waitForOpen();
+      impostor.send({ type: 'RECONNECT', roomCode: clients[0].roomCode, playerId: clients[0].playerId, playerToken: 'not-the-real-token' });
+      const errorMsg = await impostor.waitFor((m) => m.type === 'ERROR');
+      expect(errorMsg).toMatchObject({ type: 'ERROR', message: expect.stringContaining('Could not reconnect') });
+      clients.forEach((c) => c.close());
+      impostor.close();
+    });
+
+    it('responds to PING with PONG', async () => {
+      const client = new TestClient(port);
+      await client.waitForOpen();
+      client.send({ type: 'PING' });
+      const pong = await client.waitFor((m) => m.type === 'PONG');
+      expect(pong.type).toBe('PONG');
+      client.close();
+    });
+  });
+
+  describe('reconnection', () => {
+    it('lets a dropped player resume the same game with their token and see their private hand again', async () => {
+      const clients = await connectPlayers(4);
+      clients[0].send({ type: 'START_GAME' });
+      await Promise.all(clients.map((c) => c.waitFor((m) => m.type === 'GAME_STATE')));
+
+      const dropped = clients[1];
+      const { roomCode, playerId } = dropped;
+      // The server issues a fresh token in the JOINED reply; grab it from that message.
+      const joined = dropped.messages.find((m) => m.type === 'JOINED') as Extract<ServerMessage, { type: 'JOINED' }>;
+      dropped.close();
+      await new Promise((r) => setTimeout(r, 100));
+
+      const resumed = new TestClient(port);
+      await resumed.waitForOpen();
+      resumed.send({ type: 'RECONNECT', roomCode, playerId, playerToken: joined.playerToken });
+      const joinedAgain = await resumed.waitFor((m) => m.type === 'JOINED');
+      expect(joinedAgain).toMatchObject({ type: 'JOINED', playerId });
+
+      const state = await resumed.waitFor((m) => m.type === 'GAME_STATE');
+      if (state.type !== 'GAME_STATE') throw new Error('expected GAME_STATE');
+      const self = state.state.players.find((p) => p.id === playerId)!;
+      expect(self.resources).not.toBeNull(); // private hand visible to its own owner again
+      expect(self.connected).toBe(true);
+
+      clients.filter((c) => c !== dropped).forEach((c) => c.close());
+      resumed.close();
+    });
+  });
+
+  describe('duplicate colors and host migration over real sockets', () => {
+    it('resolves a duplicate color request to a different color', async () => {
+      const host = new TestClient(port);
+      await host.waitForOpen();
+      host.send({ type: 'CREATE_ROOM', name: 'Alice', color: 'red', playerCount: 4 });
+      await host.waitFor((m) => m.type === 'JOINED');
+
+      const bob = new TestClient(port);
+      await bob.waitForOpen();
+      bob.send({ type: 'JOIN_ROOM', roomCode: host.roomCode, name: 'Bob', color: 'red' });
+      await bob.waitFor((m) => m.type === 'JOINED');
+
+      const lobbyMsg = await bob.waitFor((m) => m.type === 'LOBBY_STATE');
+      if (lobbyMsg.type !== 'LOBBY_STATE') throw new Error('expected LOBBY_STATE');
+      const colors = lobbyMsg.lobby.players.map((p) => p.color);
+      expect(new Set(colors).size).toBe(2); // no duplicate
+
+      host.close();
+      bob.close();
+    });
+
+    it('reassigns the host if the host disconnects before the game starts', async () => {
+      const host = new TestClient(port);
+      await host.waitForOpen();
+      host.send({ type: 'CREATE_ROOM', name: 'Alice', color: 'red', playerCount: 4 });
+      await host.waitFor((m) => m.type === 'JOINED');
+
+      const bob = new TestClient(port);
+      await bob.waitForOpen();
+      bob.send({ type: 'JOIN_ROOM', roomCode: host.roomCode, name: 'Bob', color: 'blue' });
+      await bob.waitFor((m) => m.type === 'JOINED');
+      bob.messages = [];
+
+      host.close();
+      const lobbyMsg = await bob.waitFor((m) => m.type === 'LOBBY_STATE', 3000);
+      if (lobbyMsg.type !== 'LOBBY_STATE') throw new Error('expected LOBBY_STATE');
+      expect(lobbyMsg.lobby.hostId).toBe(bob.playerId);
+
+      bob.close();
+    });
+  });
+
+  describe('lobby cleanup', () => {
+    it('removes an empty room from the lobby once everyone disconnects', async () => {
+      const client = new TestClient(port);
+      await client.waitForOpen();
+      client.send({ type: 'CREATE_ROOM', name: 'Solo', color: 'red', playerCount: 4 });
+      await client.waitFor((m) => m.type === 'JOINED');
+      const roomCode = client.roomCode;
+      expect(lobby.get(roomCode)).toBeDefined();
+
+      client.close();
+      await new Promise((r) => setTimeout(r, 1200)); // removeIfEmpty runs on a 1s timer after close
+
+      expect(lobby.get(roomCode)).toBeUndefined();
+    });
+  });
 });
