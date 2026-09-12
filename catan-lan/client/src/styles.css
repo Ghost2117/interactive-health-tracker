@@ -1,0 +1,43 @@
+:root {
+  --bg: #f6f3ec;
+  --panel: #ffffff;
+  --border: #ddd6c5;
+  --text: #2a2a2a;
+  --text-muted: #6b6558;
+  --accent: #2f6b3a;
+  --accent-light: #eaf3ec;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+button {
+  font-family: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
