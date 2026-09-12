@@ -99,19 +99,23 @@ export function BoardView({ state, legalVertexIds, legalEdgeIds, legalTileIds, o
         const [a, b] = edge.vertexIds.map((id) => board.vertices[id]);
         if (!owner && !isLegal) return null;
         return (
-          <line
-            key={edgeId}
-            x1={a.x}
-            y1={a.y}
-            x2={b.x}
-            y2={b.y}
-            stroke={owner ? playerColor(state, owner) : '#ffffff'}
-            strokeWidth={owner ? 8 : 10}
-            strokeOpacity={owner ? 1 : 0.5}
-            strokeLinecap="round"
-            onClick={() => isLegal && onEdgeClick(edgeId)}
-            style={{ cursor: isLegal ? 'pointer' : 'default' }}
-          />
+          <g key={edgeId} onClick={() => isLegal && onEdgeClick(edgeId)} style={{ cursor: isLegal ? 'pointer' : 'default' }}>
+            {/* Invisible wide hit area so the tappable strip is finger-sized
+                on touch screens without the visible road looking bulky. */}
+            {isLegal && (
+              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="transparent" strokeWidth={30} strokeLinecap="round" />
+            )}
+            <line
+              x1={a.x}
+              y1={a.y}
+              x2={b.x}
+              y2={b.y}
+              stroke={owner ? playerColor(state, owner) : '#ffffff'}
+              strokeWidth={owner ? 8 : 10}
+              strokeOpacity={owner ? 1 : 0.5}
+              strokeLinecap="round"
+            />
+          </g>
         );
       })}
 
@@ -121,6 +125,9 @@ export function BoardView({ state, legalVertexIds, legalEdgeIds, legalTileIds, o
         if (!building && !isLegal) return null;
         return (
           <g key={vertexId} onClick={() => isLegal && onVertexClick(vertexId)} style={{ cursor: isLegal ? 'pointer' : 'default' }}>
+            {/* Invisible larger hit circle so the tap target meets a
+                finger-sized minimum even though the visible marker is small. */}
+            {isLegal && <circle cx={vertex.x} cy={vertex.y} r={24} fill="transparent" />}
             {isLegal && !building && <circle cx={vertex.x} cy={vertex.y} r={12} fill="#ffffff" fillOpacity={0.55} stroke="#333" />}
             {building && building.type === 'settlement' && (
               <circle cx={vertex.x} cy={vertex.y} r={13} fill={playerColor(state, building.playerId)} stroke="#222" strokeWidth={2} />
